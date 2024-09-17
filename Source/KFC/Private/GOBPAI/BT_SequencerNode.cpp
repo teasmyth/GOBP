@@ -12,19 +12,6 @@ BT_SequencerNode::~BT_SequencerNode()
 {
 }
 
-void BT_SequencerNode::DeleteNode()
-{
-	if (Children.Num() > 0)
-	{
-		for (const auto& Child : Children)
-		{
-			Child->DeleteNode();
-			delete Child;
-		}
-	}
-
-	delete this;
-}
 
 void BT_SequencerNode::OnStart()
 {
@@ -32,12 +19,16 @@ void BT_SequencerNode::OnStart()
 	{
 		Action->StartAction();
 		SelectedOutcome = Action->PickNextAction();
-		SelectorFnEmpty = !SelectedOutcome.IsEmpty();
+		SelectorFnEmpty = SelectedOutcome.IsEmpty();
 	}
 }
 
 void BT_SequencerNode::OnExit()
 {
+	if (Action != nullptr)
+	{
+		Action->EndAction();
+	}
 }
 
 EBT_NodeState BT_SequencerNode::OnUpdate()
@@ -92,7 +83,6 @@ EBT_NodeState BT_SequencerNode::OnUpdate()
 
 	if (Action->ActionType == EActionType::Picker)
 	{
-		//If not a selector, then it is a "picker". Based on the selected outcome of "PickNextAction", it will pick the next action.
 		for (const auto& Child : Children)
 		{
 			if (Child->Action == nullptr) continue;

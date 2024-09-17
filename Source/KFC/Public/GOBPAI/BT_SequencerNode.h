@@ -13,10 +13,21 @@ class KFC_API BT_SequencerNode : public BT_Node
 {
 public:
 	BT_SequencerNode();
-	~BT_SequencerNode();
+	explicit BT_SequencerNode(UGobpAction* InAction)
+	{
+		Action = InAction;
+		if (Action == nullptr) return;
+		NodeName = Action->Name;
+	}
+	
+	virtual ~BT_SequencerNode() override;
 
-	TArray<BT_Node*> GetChildren() { return Children; }
-	virtual void DeleteNode() override;
+	TArray<TSharedPtr<BT_Node>> GetChildren() { return Children; }
+
+	void AddChild(const TSharedPtr<BT_Node>& InChild)
+	{
+		Children.Add(InChild);
+	}
 
 protected:
 	virtual void OnStart() override;
@@ -24,7 +35,7 @@ protected:
 	virtual EBT_NodeState OnUpdate() override;
 
 private:
-	TArray<BT_Node*> Children;
+	TArray<TSharedPtr<BT_Node>> Children;
 	TArray<EConditions> SelectedOutcome;
 	bool SelectorFnEmpty = false;
 	/*

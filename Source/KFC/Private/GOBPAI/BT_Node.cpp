@@ -22,6 +22,11 @@ EBT_NodeState BT_Node::Update()
 	
 	if (Action != nullptr)
 	{
+		if (Action->ActionType == EActionType::Null)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Action Type is Null at %s"), *NodeName);
+			return Failure;
+		}
 		State = Action->ExecuteAction();
 	}
 	else
@@ -43,34 +48,4 @@ void BT_Node::ResetNode()
 	Started = false;
 	State = Running;
 }
-
-void BT_Node::OnStart()
-{
-	if (Action != nullptr)
-	{
-		Action->StartAction();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
-	}
-}
-
-void BT_Node::OnExit()
-{
-	if (Action != nullptr)
-	{
-		Action->EndAction();
-	}
-	else 
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
-	}
-}
-
-void BT_Node::SetAction(UGobpAction* InAction)
-{
-	Action = InAction;
-}
-
 

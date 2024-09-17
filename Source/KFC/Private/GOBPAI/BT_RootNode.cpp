@@ -7,6 +7,7 @@
 
 BT_RootNode::BT_RootNode()
 {
+	NodeName = "RootNode";
 }
 
 BT_RootNode::~BT_RootNode()
@@ -22,16 +23,7 @@ EBT_NodeState BT_RootNode::OnUpdate()
 	return Child->Update();
 }
 
-void BT_RootNode::DeleteNode()
-{
-	if (Child != nullptr)
-	{
-		Child->DeleteNode();
-	}
-
-	delete this;
-}
-
+/*
 void BT_RootNode::GetAllNodes(BT_Node* Parent, TArray<BT_Node*>& ChildrenToReturn)
 {
 	if (const auto SequencerNode = dynamic_cast<BT_SequencerNode*>(Parent); SequencerNode != nullptr)
@@ -73,6 +65,7 @@ void BT_RootNode::CalculateCosts() const
 		}
 	}
 }
+*/
 
 void BT_RootNode::OnStart()
 {

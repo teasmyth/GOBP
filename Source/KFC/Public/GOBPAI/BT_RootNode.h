@@ -12,21 +12,14 @@ class KFC_API BT_RootNode : public BT_Node
 {
 public:
 	BT_RootNode();
-
-	explicit BT_RootNode(UGobpAction* InAction)
-	{
-		Action = InAction;
-	}
-
 	virtual ~BT_RootNode() override;
 
-	BT_Node* Child = nullptr;
+	TSharedPtr<BT_Node> Child = nullptr;
 
 	virtual EBT_NodeState OnUpdate() override;
-	virtual void DeleteNode() override;
-	static void GetAllNodes(BT_Node* Parent, TArray<BT_Node*>& ChildrenToReturn);
-	void TraverseSetOwner(AActor* InActor);
-	void CalculateCosts() const;
+	//static void GetAllNodes(BT_Node* Parent, TArray<BT_Node*>& ChildrenToReturn);
+//	void TraverseSetOwner(AActor* InActor);
+	//void CalculateCosts() const;
 
 
 

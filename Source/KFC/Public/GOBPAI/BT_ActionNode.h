@@ -12,13 +12,13 @@ class KFC_API BT_ActionNode : public BT_Node
 {
 public:
 	BT_ActionNode();
-	explicit BT_ActionNode(UGobpAction* InAction, AActor* InActor)
+	explicit BT_ActionNode(UGobpAction* InAction)
 	{
 		Action = InAction;
-		Owner = InActor;
+		if (Action == nullptr) return;
+		NodeName = Action->Name;
 	}
 	virtual ~BT_ActionNode() override;
-	virtual void DeleteNode() override;
 
 
 protected:

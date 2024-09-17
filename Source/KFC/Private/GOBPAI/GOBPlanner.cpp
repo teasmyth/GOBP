@@ -5,6 +5,7 @@
 
 #include "BehaviorTree/BTTaskNode.h"
 #include "BehaviorTree/Composites/BTComposite_Selector.h"
+#include "GOBPAI/BT_SequencerNode.h"
 #include "GOBPAI/GOBPWorld.h"
 
 GOBPlanner::GOBPlanner()
@@ -16,7 +17,7 @@ GOBPlanner::~GOBPlanner()
 }
 
 
-UBehaviorTree* GOBPlanner::Plan(UObject* Outer, const EPriority& Priority, const TArray<UGobpAction*>& InActions, const TSet<FWorldState>& InGoals)
+bool GOBPlanner::Plan(UObject* Outer, const EPriority& Priority, const TArray<UGobpAction*>& InActions, const TSet<FWorldState>& InGoals, UBehaviorTree*& OutUnrealBT, TSharedPtr<BT_RootNode>& OutRootNode)
 {
 	TArray<FWorldState> SortedGoals = InGoals.Array();
 
@@ -64,7 +65,7 @@ UBehaviorTree* GOBPlanner::Plan(UObject* Outer, const EPriority& Priority, const
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Plan Found"));
 		UE_LOG(LogTemp, Warning, TEXT("No Plan Found"));
 		
-		return nullptr;
+		return false;
 	}
 
 
@@ -79,9 +80,11 @@ UBehaviorTree* GOBPlanner::Plan(UObject* Outer, const EPriority& Priority, const
 			PrioritizeCost(MainPlan);
 		}
 	}
+	
+	OutUnrealBT = ConstructUnrealBT(Outer, MainPlan);
+	OutRootNode = ConstructBT(MainPlan);
 
-	UE_LOG(LogTemp, Warning, TEXT("Plan Found"));
-	return ConstructBehaviourTree(Outer, MainPlan);
+	return true;
 }
 
 bool GOBPlanner::FindPath(const TSharedPtr<Node>& Child, TArray<UGobpAction*> UsableActions, TSharedPtr<Node>& EndNode)
@@ -139,7 +142,7 @@ bool GOBPlanner::FindPath(const TSharedPtr<Node>& Child, TArray<UGobpAction*> Us
 	return false;
 }
 
-UBehaviorTree* GOBPlanner::ConstructBehaviourTree(UObject* Outer, const TSharedPtr<Node>& Node)
+UBehaviorTree* GOBPlanner::ConstructUnrealBT(UObject* Outer, const TSharedPtr<Node>& Node)
 {
 	if (Outer == nullptr)
 	{
@@ -151,13 +154,13 @@ UBehaviorTree* GOBPlanner::ConstructBehaviourTree(UObject* Outer, const TSharedP
 	BehaviorTree->RootNode = RootNode;
 
 	RootNode->NodeName = Node->Action->Name;
-	PopulateTree(Node, RootNode, BehaviorTree);
+	PopulateUnrealBT(Node, RootNode, BehaviorTree);
 
 
 	return BehaviorTree;
 }
 
-void GOBPlanner::PopulateTree(const TSharedPtr<Node>& Node, UBTCompositeNode* ParentNode, UBehaviorTree* Tree)
+void GOBPlanner::PopulateUnrealBT(const TSharedPtr<Node>& Node, UBTCompositeNode* ParentNode, UBehaviorTree* Tree)
 {
 	for (const auto& Leaf : Node->Leaves)
 	{
@@ -182,10 +185,69 @@ void GOBPlanner::PopulateTree(const TSharedPtr<Node>& Node, UBTCompositeNode* Pa
 			ParentNode->Children.Add(ChildSelector);
 
 
-			PopulateTree(Leaf, Selector, Tree);
+			PopulateUnrealBT(Leaf, Selector, Tree);
 		}
 	}
 }
+
+TSharedPtr<BT_RootNode> GOBPlanner::ConstructBT(const TSharedPtr<Node>& InBTRootNode)
+{
+	const TSharedPtr<BT_RootNode> RootNode = MakeShareable(new BT_RootNode());
+	const TSharedPtr<BT_SequencerNode> RootChild = MakeShareable(new BT_SequencerNode(InBTRootNode->Action));
+	RootNode->Child = RootChild;
+	PopulateBT(RootChild, InBTRootNode);
+
+	UE_LOG(LogTemp, Warning, TEXT("RootNode: %s"), *RootNode->NodeName);
+	return RootNode;
+}
+
+//todo rename params todo
+void GOBPlanner::PopulateBT(const TSharedPtr<BT_SequencerNode>& OutRootNode, const TSharedPtr<Node>& InRootNode)
+{
+	/*
+	if (InRootNode->Leaves.IsEmpty())
+	{
+		const TSharedPtr<BT_ActionNode> NewActionNode = MakeShareable(new BT_ActionNode(InRootNode->Action));
+		OutRootNode->AddChild(NewActionNode);
+	}
+	else
+	{
+		const TSharedPtr<BT_SequencerNode> NewSequencerNode = MakeShareable(new BT_SequencerNode(InRootNode->Action));
+		OutRootNode->AddChild(NewSequencerNode);
+		for (const auto& Child : InRootNode->Leaves)
+		{
+			PopulateBT(NewSequencerNode, Child);
+		}
+	}
+	*/
+
+	if (InRootNode->Leaves.IsEmpty())
+	{
+		const TSharedPtr<BT_ActionNode> NewActionNode = MakeShareable(new BT_ActionNode(InRootNode->Action));
+		OutRootNode->AddChild(NewActionNode);
+	}
+	else
+	{
+		for (const auto& Child : InRootNode->Leaves)
+		{
+			if (Child->Leaves.IsEmpty())
+			{
+				const TSharedPtr<BT_ActionNode> NewActionNode = MakeShareable(new BT_ActionNode(Child->Action));
+				OutRootNode->AddChild(NewActionNode);
+			}
+			else
+			{
+				const TSharedPtr<BT_SequencerNode> NewSequencerNode = MakeShareable(new BT_SequencerNode(Child->Action));
+				OutRootNode->AddChild(NewSequencerNode);
+				for (const auto& GrandChild : Child->Leaves)
+				{
+					PopulateBT(NewSequencerNode, GrandChild);
+				}
+			}
+		}
+	}
+}
+
 
 void GOBPlanner::MergePlans(const TSharedPtr<Node>& MainPlan, const TArray<TSharedPtr<Node>>& Leaves)
 {

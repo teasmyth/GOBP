@@ -35,6 +35,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBehaviorTree* BehaviorTree = nullptr;
 
+	TSharedPtr<BT_RootNode> RootNode;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

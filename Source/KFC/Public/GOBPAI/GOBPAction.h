@@ -12,6 +12,7 @@
 UENUM(BlueprintType)
 enum class EActionType : uint8
 {
+	Null,
 	Action,
 	Selector,
 	Picker,
@@ -33,7 +34,7 @@ public:
 	
 	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "GOBP")
-	EActionType ActionType = EActionType::Action;
+	EActionType ActionType = EActionType::Null;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "GOBP")
 	FString Name = "Action";
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "GOBP")
@@ -78,8 +79,9 @@ public:
 	EBT_NodeState ExecuteActionBP();
 	virtual EBT_NodeState ExecuteAction();
 
-	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")
+	UFUNCTION(BlueprintNativeEvent, Category = "GOBP", meta = (DisplayName = "Pick Next Action", Tooltip = "This runs after Start action. It is used to determine the next action to be taken."))
 	TArray<EConditions> PickNextActionBP();
+	//This runs after Start action. It is used to determine the next action to be taken.
 	virtual TArray<EConditions> PickNextAction();
 
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")

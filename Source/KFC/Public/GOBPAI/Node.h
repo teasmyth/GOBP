@@ -1,45 +1,43 @@
 ﻿#pragma once
 #include "GOBPAction.h"
 
-namespace GOBPPlanner
+class Node
 {
-	class Node
+public:
+	Node();
+	~Node();
+
+	TSharedPtr<Node> Parent = nullptr;
+	float Cost = 0;
+	UGobpAction* Action = nullptr;
+	TArray<EConditions> ConditionStates;
+	TArray<TSharedPtr<Node>> Leaves;
+	EActionType ActionType = EActionType::Null;
+	
+	Node(const TSharedPtr<Node>& InParent, const float InCost, const TArray<EConditions>& InState, UGobpAction* InAction)
 	{
-	public:
-		Node();
-		~Node();
+		Parent = InParent;
+		Cost = InCost;
+		Action = InAction;
+		ConditionStates = InState;
+		ActionType = Action != nullptr ? Action->ActionType : EActionType::Null;
+	}
 
-		TSharedPtr<Node> Parent = nullptr;
-		float Cost = 0;
-		UGobpAction* Action = nullptr;
-		TArray<EConditions> ConditionStates;
-		TArray<TSharedPtr<Node>> Leaves;
-
-		Node(const TSharedPtr<Node>& InParent, const float InCost, const TArray<EConditions>& InState, UGobpAction* InAction)
+	bool operator==(const Node& Other) const
+	{
+		if (Action == nullptr || Other.Action == nullptr)
 		{
-			Parent = InParent;
-			Cost = InCost;
-			Action = InAction;
-			ConditionStates = InState;
+			return false;
 		}
+		return Action == Other.Action;
+	}
 
-		bool operator==(const Node& Other) const
+	bool operator==(const TSharedPtr<Node>& Other) const
+	{
+		if (Action == nullptr || Other->Action == nullptr)
 		{
-			if (Action == nullptr || Other.Action == nullptr)
-			{
-				return false;
-			}
-			return Action == Other.Action;
+			return false;
 		}
-
-		bool operator==(const TSharedPtr<Node>& Other) const
-		{
-			if (Action == nullptr || Other->Action == nullptr)
-			{
-				return false;
-			}
-			return Action == Other->Action;
-		}
-		
-	};
-}
+		return Action == Other->Action;
+	}
+};

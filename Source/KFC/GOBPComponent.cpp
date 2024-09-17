@@ -1,13 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "GOBPComponent.h"
-
-#include "Editor.h"
 #include "AssetRegistry/ARFilter.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "UObject/SavePackage.h"
 
 
 // Sets default values for this component's properties
@@ -32,10 +28,7 @@ void UGOBPComponent::BeginPlay()
 
 	if (BehaviorTreeComponent && BlackboardComponent)
 	{
-		BehaviorTree = GOBPlanner::Plan(this, Priority, Actions, Goals);
-
-
-		if (BehaviorTree)
+		if (GOBPlanner::Plan(this, Priority, Actions, Goals, BehaviorTree, RootNode))
 		{
 			UBlackboardData* BlackboardAsset = NewObject<UBlackboardData>();
 			BehaviorTree->BlackboardAsset = BlackboardAsset;
@@ -44,6 +37,11 @@ void UGOBPComponent::BeginPlay()
 		}
 	}
 
+	
+	if (RootNode.IsValid())
+	{
+		RootNode->Update();
+	}
 
 	// ...
 }
@@ -56,6 +54,7 @@ void UGOBPComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	BehaviorTree = nullptr;
 	BehaviorTreeComponent = nullptr;
 	BlackboardComponent = nullptr;
+	RootNode = nullptr;
 }
 
 
@@ -75,8 +74,8 @@ void UGOBPComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 void UGOBPComponent::FindAllActions()
 {
 	Actions.Empty();
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	const IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
 
 	TArray<FAssetData> AssetDataList;
 	FARFilter Filter;

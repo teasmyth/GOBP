@@ -56,18 +56,19 @@ EBT_NodeState UGobpAction::ExecuteAction()
 	return ExecuteActionBP();
 }
 
+TArray<EConditions> UGobpAction::PickNextActionBP_Implementation()
+{
+	return TArray<EConditions>();
+}
+
 TArray<EConditions> UGobpAction::PickNextAction()
 {
-	if (TArray<EConditions> Conditions = PickNextActionBP(); !Conditions.IsEmpty())
+	const TArray<EConditions> Conditions = PickNextActionBP(); 
+	if (!Conditions.IsEmpty())
 	{
 		return Conditions;
 	}
 
-	return TArray<EConditions>();
-}
-
-TArray<EConditions> UGobpAction::PickNextActionBP_Implementation()
-{
 	return TArray<EConditions>();
 }
 
