@@ -3,6 +3,8 @@ GOBP - Goal Oriented Behaviour Planning. Runtime procedureal Behaviour Tree crea
 
 *Will have a more in-depth post about this code in my personal blogpost later*
 
+Link to the blogpost: [Blog Post](https://farukosm.wordpress.com/2024/09/16/gobp-goal-oriented-behavior-planning/)
+
 GOBP is an AI system that is designed for complex multi-AI environments where AIs are in a very dynamic environment, requiring sophisticated plans. Rather, plans within plans.
 
 Traditionally GOAP generates a linear plan. A->B->C->D->etc. This is extremely useful in many cases, but for example, in a football game, a linear plan is not sophisticated enough for an NPCs AI.
