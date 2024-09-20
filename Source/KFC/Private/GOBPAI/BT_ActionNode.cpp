@@ -12,11 +12,11 @@ BT_ActionNode::~BT_ActionNode()
 }
 
 
-void BT_ActionNode::OnStart()
+void BT_ActionNode::OnStart(UPlayerStats* Player)
 {
 	if (Action != nullptr)
 	{
-		Action->StartAction();
+		Action->StartAction(Player);
 	}
 	else
 	{
@@ -24,11 +24,11 @@ void BT_ActionNode::OnStart()
 	}
 }
 
-void BT_ActionNode::OnExit()
+void BT_ActionNode::OnExit(UPlayerStats* Player)
 {
 	if (Action != nullptr)
 	{
-		Action->EndAction();
+		Action->EndAction(Player);
 	}
 	else 
 	{
@@ -36,11 +36,11 @@ void BT_ActionNode::OnExit()
 	}
 }
 
-EBT_NodeState BT_ActionNode::OnUpdate()
+EBT_NodeState BT_ActionNode::OnUpdate(UPlayerStats* Player)
 {
 	if (Action != nullptr)
 	{
-		State = Action->ExecuteAction();
+		State = Action->ExecuteAction(Player);
 	}
 	else
 	{

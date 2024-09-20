@@ -14,13 +14,13 @@ BT_RootNode::~BT_RootNode()
 {
 }
 
-EBT_NodeState BT_RootNode::OnUpdate()
+EBT_NodeState BT_RootNode::OnUpdate(UPlayerStats* Player)
 {
 	if (Child == nullptr)
 	{
 		return Failure;
 	}
-	return Child->Update();
+	return Child->Update(Player);
 }
 
 /*
@@ -67,11 +67,11 @@ void BT_RootNode::CalculateCosts() const
 }
 */
 
-void BT_RootNode::OnStart()
+void BT_RootNode::OnStart(UPlayerStats* Player)
 {
 }
 
-void BT_RootNode::OnExit()
+void BT_RootNode::OnExit(UPlayerStats* Player)
 {
 }
 

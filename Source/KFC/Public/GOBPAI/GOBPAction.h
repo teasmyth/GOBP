@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "WorldStates.h"
+#include "KFC/Public/Football/PlayerStats.h"
 #include "KFC/Public/GOBPAI/EBT_NodeState.h"
 #include "GobpAction.generated.h"
 
@@ -68,27 +69,27 @@ public:
 
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")
-	void StartActionBP();
-	virtual void StartAction();
+	void StartActionBP(UPlayerStats* Player);
+	virtual void StartAction(UPlayerStats* Player);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")
-	void EndActionBP();
-	virtual void EndAction();
+	void EndActionBP(UPlayerStats* Player);
+	virtual void EndAction(UPlayerStats* Player);
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")
-	EBT_NodeState ExecuteActionBP();
-	virtual EBT_NodeState ExecuteAction();
+	EBT_NodeState ExecuteActionBP(UPlayerStats* Player);
+	virtual EBT_NodeState ExecuteAction(UPlayerStats* Player);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP", meta = (DisplayName = "Pick Next Action", Tooltip = "This runs after Start action. It is used to determine the next action to be taken."))
-	TArray<EConditions> PickNextActionBP();
+	TArray<EConditions> PickNextActionBP(UPlayerStats* Player);
 	//This runs after Start action. It is used to determine the next action to be taken.
-	virtual TArray<EConditions> PickNextAction();
+	virtual TArray<EConditions> PickNextAction(UPlayerStats* Player);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")
-	float CalculateCostBP();
-	virtual float CalculateCost();
+	float CalculateCostBP(UPlayerStats* Player);
+	virtual float CalculateCost(UPlayerStats* Player);
 
-	float GetCost() { return CalculateCost(); }
+	float GetCost(UPlayerStats* Player) { return CalculateCost(Player); }
 
 	//Checking if of the preconditions of the new node can be satisfied by the current node's effects.
 	virtual bool CanBeDoneBeforeNewAction(const TArray<EConditions>& InConditions) const;

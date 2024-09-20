@@ -32,38 +32,38 @@ bool UGobpAction::IsAchievableGivenConditions(const TArray<EConditions>& InCondi
 	return true;
 }
 
-void UGobpAction::StartAction()
+void UGobpAction::StartAction(UPlayerStats* Player)
 {
-	StartActionBP();
+	StartActionBP(Player);
 }
 
-void UGobpAction::EndActionBP_Implementation()
+void UGobpAction::EndActionBP_Implementation(UPlayerStats* Player)
 {
 }
 
-void UGobpAction::EndAction()
+void UGobpAction::EndAction(UPlayerStats* Player)
 {
-	EndActionBP();
+	EndActionBP(Player);
 }
 
-EBT_NodeState UGobpAction::ExecuteActionBP_Implementation()
+EBT_NodeState UGobpAction::ExecuteActionBP_Implementation(UPlayerStats* Player)
 {
 	return Success;
 }
 
-EBT_NodeState UGobpAction::ExecuteAction()
+EBT_NodeState UGobpAction::ExecuteAction(UPlayerStats* Player)
 {
-	return ExecuteActionBP();
+	return ExecuteActionBP(Player);
 }
 
-TArray<EConditions> UGobpAction::PickNextActionBP_Implementation()
+TArray<EConditions> UGobpAction::PickNextActionBP_Implementation(UPlayerStats* Player)
 {
 	return TArray<EConditions>();
 }
 
-TArray<EConditions> UGobpAction::PickNextAction()
+TArray<EConditions> UGobpAction::PickNextAction(UPlayerStats* Player)
 {
-	const TArray<EConditions> Conditions = PickNextActionBP(); 
+	const TArray<EConditions> Conditions = PickNextActionBP(Player); 
 	if (!Conditions.IsEmpty())
 	{
 		return Conditions;
@@ -72,9 +72,9 @@ TArray<EConditions> UGobpAction::PickNextAction()
 	return TArray<EConditions>();
 }
 
-float UGobpAction::CalculateCost()
+float UGobpAction::CalculateCost(UPlayerStats* Player)
 {
-	return CalculateCostBP();
+	return CalculateCostBP(Player);
 }
 
 /*
@@ -133,12 +133,12 @@ bool UGobpAction::CanBeDoneBeforeNewAction(const TArray<EConditions>& InConditio
 }
 
 
-float UGobpAction::CalculateCostBP_Implementation()
+float UGobpAction::CalculateCostBP_Implementation(UPlayerStats* Player)
 {
 	return 0;
 }
 
-void UGobpAction::StartActionBP_Implementation()
+void UGobpAction::StartActionBP_Implementation(UPlayerStats* Player)
 {
 }
 

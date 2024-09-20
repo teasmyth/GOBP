@@ -16,7 +16,7 @@ public:
 
 	TSharedPtr<BT_Node> Child = nullptr;
 
-	virtual EBT_NodeState OnUpdate() override;
+	virtual EBT_NodeState OnUpdate(UPlayerStats* Player) override;
 	//static void GetAllNodes(BT_Node* Parent, TArray<BT_Node*>& ChildrenToReturn);
 //	void TraverseSetOwner(AActor* InActor);
 	//void CalculateCosts() const;
@@ -24,8 +24,8 @@ public:
 
 
 protected:
-	virtual void OnStart() override;
-	virtual void OnExit() override;
+	virtual void OnStart(UPlayerStats* Player) override;
+	virtual void OnExit(UPlayerStats* Player) override;
 	virtual void ResetNode() override;
 };
 

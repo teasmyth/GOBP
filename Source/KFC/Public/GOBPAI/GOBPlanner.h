@@ -49,8 +49,8 @@ public:
 
 	//Passing in an empty node with the desired goal, and from there it works its way back to the start
 	//StartNode is the start from the plan, the first action to execute
-	static bool FindPath(const TSharedPtr<Node>& Child, TArray<UGobpAction*> UsableActions, TSharedPtr<Node>& EndNode);
-	static bool Plan(UObject* Outer, const EPriority& Priority, const TArray<UGobpAction*>& InActions, const TSet<FWorldState>& InGoals, UBehaviorTree*& OutUnrealBT, TSharedPtr<BT_RootNode>& OutRootNode);
+	static bool FindPath(UPlayerStats* Player, const TSharedPtr<Node>& Child, TArray<UGobpAction*> UsableActions, TSharedPtr<Node>& EndNode);
+	static bool Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Priority, const TArray<UGobpAction*>& InActions, const TSet<FWorldState>& InGoals, UBehaviorTree*& OutUnrealBT, TSharedPtr<BT_RootNode>& OutRootNode);
 
 	static UBehaviorTree* ConstructUnrealBT(UObject* Outer, const TSharedPtr<Node>& Node);
 	static void PopulateUnrealBT(const TSharedPtr<Node>& Node, UBTCompositeNode* ParentNode, UBehaviorTree* Tree);

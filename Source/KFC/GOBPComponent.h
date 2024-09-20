@@ -18,6 +18,9 @@ public:
 	UGOBPComponent();
 
 	UPROPERTY(EditAnywhere)
+	UPlayerStats* PlayerStats = nullptr;
+
+	UPROPERTY(EditAnywhere)
 	TArray<UGobpAction*> Actions;
 
 	UPROPERTY(EditAnywhere)

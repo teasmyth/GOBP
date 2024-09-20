@@ -10,15 +10,15 @@ BT_Node::BT_Node()
 }
 
 
-EBT_NodeState BT_Node::Update()
+EBT_NodeState BT_Node::Update(UPlayerStats* Player)
 {
 	if (!Started)
 	{
-		OnStart();
+		OnStart(Player);
 		Started = true;
 	}
 
-	State = OnUpdate();
+	State = OnUpdate(Player);
 	
 	if (Action != nullptr)
 	{
@@ -27,7 +27,7 @@ EBT_NodeState BT_Node::Update()
 			UE_LOG(LogTemp, Warning, TEXT("Action Type is Null at %s"), *NodeName);
 			return Failure;
 		}
-		State = Action->ExecuteAction();
+		State = Action->ExecuteAction(Player);
 	}
 	else
 	{
@@ -36,7 +36,7 @@ EBT_NodeState BT_Node::Update()
 
 	if (State != Running)
 	{
-		OnExit();
+		OnExit(Player);
 		Started = false;
 	}
 

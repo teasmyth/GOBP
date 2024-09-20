@@ -17,7 +17,7 @@ GOBPlanner::~GOBPlanner()
 }
 
 
-bool GOBPlanner::Plan(UObject* Outer, const EPriority& Priority, const TArray<UGobpAction*>& InActions, const TSet<FWorldState>& InGoals, UBehaviorTree*& OutUnrealBT, TSharedPtr<BT_RootNode>& OutRootNode)
+bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Priority, const TArray<UGobpAction*>& InActions, const TSet<FWorldState>& InGoals, UBehaviorTree*& OutUnrealBT, TSharedPtr<BT_RootNode>& OutRootNode)
 {
 	TArray<FWorldState> SortedGoals = InGoals.Array();
 
@@ -50,9 +50,9 @@ bool GOBPlanner::Plan(UObject* Outer, const EPriority& Priority, const TArray<UG
 	for (const auto GoalAction : GoalActions)
 	{
 		//We pass in an empty node, whose conditions will be satisfied by the first 'final' action. E.g. Shoot, Pass, etc.
-		TSharedPtr<Node> GoalNode = MakeShareable(new Node(nullptr, GoalAction.Action->GetCost(), GoalAction.Goals, nullptr));
+		TSharedPtr<Node> GoalNode = MakeShareable(new Node(nullptr, GoalAction.Action->GetCost(Player), GoalAction.Goals, nullptr));
 
-		if (TSharedPtr<Node> StartNode = nullptr; FindPath(GoalNode, UsedActions, StartNode))
+		if (TSharedPtr<Node> StartNode = nullptr; FindPath(Player, GoalNode, UsedActions, StartNode))
 		{
 			UsedActions.Remove(GoalAction.Action);
 			GoalNode->Parent->Leaves.Empty(); //Deleting the empty goal node.
@@ -87,7 +87,7 @@ bool GOBPlanner::Plan(UObject* Outer, const EPriority& Priority, const TArray<UG
 	return true;
 }
 
-bool GOBPlanner::FindPath(const TSharedPtr<Node>& Child, TArray<UGobpAction*> UsableActions, TSharedPtr<Node>& EndNode)
+bool GOBPlanner::FindPath(UPlayerStats* Player, const TSharedPtr<Node>& Child, TArray<UGobpAction*> UsableActions, TSharedPtr<Node>& EndNode)
 {
 	for (const auto Action : UsableActions)
 	{
@@ -119,7 +119,7 @@ bool GOBPlanner::FindPath(const TSharedPtr<Node>& Child, TArray<UGobpAction*> Us
 		*/
 
 
-		const TSharedPtr<Node> NewNode = MakeShareable(new Node(nullptr, Child->Cost + Action->GetCost(), Action->PreConditions.Array(), Action));
+		const TSharedPtr<Node> NewNode = MakeShareable(new Node(nullptr, Child->Cost + Action->GetCost(Player), Action->PreConditions.Array(), Action));
 		Child->Parent = NewNode;
 		NewNode->Leaves.Add(Child);
 
@@ -137,7 +137,7 @@ bool GOBPlanner::FindPath(const TSharedPtr<Node>& Child, TArray<UGobpAction*> Us
 
 
 		UsableActions.Remove(Action); //This removes the action from this plan only, but other plans still have it.
-		return FindPath(NewNode, UsableActions, EndNode);
+		return FindPath(Player, NewNode, UsableActions, EndNode);
 	}
 	return false;
 }

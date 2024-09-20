@@ -23,12 +23,14 @@ void UGOBPComponent::BeginPlay()
 	Super::BeginPlay();
 	FindAllActions();
 
+	PlayerStats	= GetOwner()->FindComponentByClass<UPlayerStats>();
+
 	BehaviorTreeComponent = GetOwner()->FindComponentByClass<UBehaviorTreeComponent>();
 	BlackboardComponent = GetOwner()->FindComponentByClass<UBlackboardComponent>();
 
 	if (BehaviorTreeComponent && BlackboardComponent)
 	{
-		if (GOBPlanner::Plan(this, Priority, Actions, Goals, BehaviorTree, RootNode))
+		if (GOBPlanner::Plan(PlayerStats, this, Priority, Actions, Goals, BehaviorTree, RootNode))
 		{
 			UBlackboardData* BlackboardAsset = NewObject<UBlackboardData>();
 			BehaviorTree->BlackboardAsset = BlackboardAsset;
@@ -40,7 +42,7 @@ void UGOBPComponent::BeginPlay()
 	
 	if (RootNode.IsValid())
 	{
-		RootNode->Update();
+		RootNode->Update(PlayerStats);
 	}
 
 	// ...

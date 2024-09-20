@@ -13,25 +13,25 @@ BT_SequencerNode::~BT_SequencerNode()
 }
 
 
-void BT_SequencerNode::OnStart()
+void BT_SequencerNode::OnStart(UPlayerStats* Player)
 {
 	if (Action != nullptr)
 	{
-		Action->StartAction();
-		SelectedOutcome = Action->PickNextAction();
+		Action->StartAction(Player);
+		SelectedOutcome = Action->PickNextAction(Player);
 		SelectorFnEmpty = SelectedOutcome.IsEmpty();
 	}
 }
 
-void BT_SequencerNode::OnExit()
+void BT_SequencerNode::OnExit(UPlayerStats* Player)
 {
 	if (Action != nullptr)
 	{
-		Action->EndAction();
+		Action->EndAction(Player);
 	}
 }
 
-EBT_NodeState BT_SequencerNode::OnUpdate()
+EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 {
 	if (Children.Num() == 0 || SelectorFnEmpty)
 	{
@@ -68,7 +68,7 @@ EBT_NodeState BT_SequencerNode::OnUpdate()
 		bool IsRunning = false;
 		for (const auto& Child : Children)
 		{
-			switch (Child->Update())
+			switch (Child->Update(Player))
 			{
 			case Success:
 				return Success;
@@ -89,7 +89,7 @@ EBT_NodeState BT_SequencerNode::OnUpdate()
 
 			if (SelectedOutcome == Child->Action->PreConditions.Array())
 			{
-				return Child->Update();
+				return Child->Update(Player);
 			}
 		}
 	}
