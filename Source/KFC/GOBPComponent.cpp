@@ -13,6 +13,7 @@ UGOBPComponent::UGOBPComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
+	
 	// ...
 }
 
@@ -23,13 +24,19 @@ void UGOBPComponent::BeginPlay()
 	Super::BeginPlay();
 	FindAllActions();
 
-	PlayerStats	= GetOwner()->FindComponentByClass<UPlayerStats>();
+	PlayerStats = GetOwner()->FindComponentByClass<UPlayerStats>();
 
 	BehaviorTreeComponent = GetOwner()->FindComponentByClass<UBehaviorTreeComponent>();
 	BlackboardComponent = GetOwner()->FindComponentByClass<UBlackboardComponent>();
 
+
 	if (BehaviorTreeComponent && BlackboardComponent)
 	{
+		if (BehaviorTree != nullptr)
+		{
+			RootNode.Reset();
+			BehaviorTree = nullptr;
+		}
 		if (GOBPlanner::Plan(PlayerStats, this, Priority, Actions, Goals, BehaviorTree, RootNode))
 		{
 			UBlackboardData* BlackboardAsset = NewObject<UBlackboardData>();
@@ -37,12 +44,10 @@ void UGOBPComponent::BeginPlay()
 			BlackboardComponent->InitializeBlackboard(*BehaviorTree->BlackboardAsset);
 			BehaviorTreeComponent->StartTree(*BehaviorTree);
 		}
-	}
-
-	
-	if (RootNode.IsValid())
-	{
-		RootNode->Update(PlayerStats);
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Failed to plan tree"));
+		}
 	}
 
 	// ...
@@ -65,12 +70,15 @@ void UGOBPComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	/*
-	if (!Planner.IsValid() || Queue.IsEmpty())
+
+	if (RootNode.IsValid() && bRunTree)
 	{
-		Planner->Plan(Actions);
-	})
-	*/
+		if (RootNode->RunTree(PlayerStats))
+		{
+			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Plan finished"));
+			//RootNode->ResetNode();
+		}
+	}
 }
 
 void UGOBPComponent::FindAllActions()
@@ -83,7 +91,7 @@ void UGOBPComponent::FindAllActions()
 	FARFilter Filter;
 	//Filter.ClassPaths.Add(UGobpAction::StaticClass()->GetClassPathName());
 	Filter.bRecursiveClasses = true;
-	Filter.PackagePaths.Add("/Game/GOBP/Actions");
+	Filter.PackagePaths.Add("/Game/Football/Actions");
 
 	//UE_LOG(LogTemp, Warning, TEXT("Using ClassPath: %s"), *UGobpAction::StaticClass()->GetClassPathName().ToString());
 	//UE_LOG(LogTemp, Warning, TEXT("Searching in path: /Game/GOBP/Actions"));
@@ -92,7 +100,7 @@ void UGOBPComponent::FindAllActions()
 
 	if (AssetDataList.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No assets found at path: /Game/GOBP/Actions"));
+		UE_LOG(LogTemp, Warning, TEXT("No assets found at path: /Game/Football/Actions"));
 		return;
 	}
 
@@ -113,7 +121,7 @@ void UGOBPComponent::FindAllActions()
 	{
 		Action->SetupAction();
 	}
-	
+
 	UE_LOG(LogTemp, Warning, TEXT("Found %d actions"), Actions.Num());
 }
 

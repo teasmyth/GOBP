@@ -8,6 +8,7 @@
 BT_RootNode::BT_RootNode()
 {
 	NodeName = "RootNode";
+	bIsRootNode = true;
 }
 
 BT_RootNode::~BT_RootNode()
@@ -21,6 +22,15 @@ EBT_NodeState BT_RootNode::OnUpdate(UPlayerStats* Player)
 		return Failure;
 	}
 	return Child->Update(Player);
+}
+
+bool BT_RootNode::RunTree(UPlayerStats* Player)
+{
+	if (Update(Player) == Running)
+	{
+		return false;
+	}
+	return true;
 }
 
 /*

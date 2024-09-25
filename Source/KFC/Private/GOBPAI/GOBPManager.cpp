@@ -70,4 +70,3 @@ void AGOBPManager::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
-

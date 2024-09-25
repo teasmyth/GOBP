@@ -74,7 +74,11 @@ bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Pri
 	if (StartNodes.Num() > 1)
 	{
 		StartNodes.RemoveAt(0);
-		MergePlans(MainPlan, StartNodes);
+		for (const auto& StartNode : StartNodes)
+		{
+			MergePlan(MainPlan, StartNode);
+		}
+		
 		if (Priority == EPriority::PrioritizeCost)
 		{
 			PrioritizeCost(MainPlan);
@@ -86,6 +90,37 @@ bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Pri
 
 	return true;
 }
+
+void GOBPlanner::MergePlan(const TSharedPtr<Node>& MainPlan, const TSharedPtr<Node>& OtherPlan)
+{
+	
+		if (*MainPlan == *OtherPlan) //this compares the UGobpActions they have, ensuring that they are the same action.
+		{
+			for (const auto& NewLeaf : OtherPlan->Leaves)
+			{
+				bool MainLeafHasTheAction = false;
+				for (const auto& MainLeaf : MainPlan->Leaves)
+				{
+					if (*MainLeaf == *NewLeaf)
+					{
+						MergePlan(MainLeaf, NewLeaf);
+						MainLeafHasTheAction = true;
+						break;
+					}
+				}
+				//Meaning that the action is not present in the main plan, however because they share the same parents, it can be added to the main plan.
+				if (!MainLeafHasTheAction)
+				{
+					MainPlan->Leaves.Add(NewLeaf);
+				}
+			}
+		}
+		else
+		{
+			MainPlan->Leaves.Add(OtherPlan);
+		}
+	}
+
 
 bool GOBPlanner::FindPath(UPlayerStats* Player, const TSharedPtr<Node>& Child, TArray<UGobpAction*> UsableActions, TSharedPtr<Node>& EndNode)
 {
@@ -202,6 +237,7 @@ TSharedPtr<BT_RootNode> GOBPlanner::ConstructBT(const TSharedPtr<Node>& InBTRoot
 }
 
 //todo rename params todo
+
 void GOBPlanner::PopulateBT(const TSharedPtr<BT_SequencerNode>& OutRootNode, const TSharedPtr<Node>& InRootNode)
 {
 	/*
@@ -248,37 +284,6 @@ void GOBPlanner::PopulateBT(const TSharedPtr<BT_SequencerNode>& OutRootNode, con
 	}
 }
 
-
-void GOBPlanner::MergePlans(const TSharedPtr<Node>& MainPlan, const TArray<TSharedPtr<Node>>& Leaves)
-{
-	for (const auto& Leaf : Leaves)
-	{
-		if (*MainPlan == *Leaf) //this compares the UGobpActions they have, ensuring that they are the same action.
-		{
-			for (const auto& NewLeaf : Leaf->Leaves)
-			{
-				bool MainLeafHasAction = false;
-				for (const auto& MainLeaf : MainPlan->Leaves)
-				{
-					if (*MainLeaf == *NewLeaf)
-					{
-						MergePlans(MainLeaf, NewLeaf->Leaves);
-						MainLeafHasAction = true;
-						break;
-					}
-				}
-				if (!MainLeafHasAction)
-				{
-					MainPlan->Leaves.Add(NewLeaf);
-				}
-			}
-		}
-		else
-		{
-			MainPlan->Leaves.Add(Leaf);
-		}
-	}
-}
 
 void GOBPlanner::PrioritizeCost(const TSharedPtr<Node>& Parent)
 {

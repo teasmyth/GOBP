@@ -18,22 +18,22 @@ EBT_NodeState BT_Node::Update(UPlayerStats* Player)
 		Started = true;
 	}
 
-	State = OnUpdate(Player);
 	
 	if (Action != nullptr)
 	{
 		if (Action->ActionType == EActionType::Null)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Action Type is Null at %s"), *NodeName);
+			if (!bIsRootNode) UE_LOG(LogTemp, Warning, TEXT("Action Type is Null at %s"), *NodeName);
 			return Failure;
 		}
-		State = Action->ExecuteAction(Player);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
+		if (!bIsRootNode) UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
 	}
 
+	State = OnUpdate(Player);
+	
 	if (State != Running)
 	{
 		OnExit(Player);

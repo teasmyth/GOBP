@@ -36,6 +36,19 @@ public:
 	AActor* GetBall() const { return Ball; }
 
 
+	UPROPERTY(EditAnywhere, Category = "GOBP")
+	AActor* HomeGoal;
+
+	UPROPERTY(EditAnywhere, Category = "GOBP")
+	AActor* AwayGoal;
+
+	UFUNCTION(BlueprintCallable, Category = "GOBP")
+	AActor* GetHomeGoal() const { return HomeGoal; }
+
+	UFUNCTION(BlueprintCallable, Category = "GOBP")
+	AActor* GetAwayGoal() const { return AwayGoal; }
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GOBP")
 	float RunModifier;
 

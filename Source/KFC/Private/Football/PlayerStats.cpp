@@ -15,6 +15,19 @@ UPlayerStats::UPlayerStats(): PlayerID(0), MaxStamina(0), CurrentMaxStamina(0), 
                               Vision(0)
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	
+}
+
+void UPlayerStats::SetHasBall(UPlayerStats* Player)
+{
+	if (Player == this)
+	{
+		bHasBall = true;
+	}
+	else
+	{
+		bHasBall = false;
+	}
 }
 
 void UPlayerStats::BeginPlay()
@@ -28,6 +41,7 @@ void UPlayerStats::BeginPlay()
 	CurrentMaxStamina = MaxStamina;
 	CurrentStamina = MaxStamina;
 	DefaultSpeed = MovementComponent->MaxWalkSpeed;
+	OnBallOwned.AddDynamic(this, &UPlayerStats::SetHasBall);
 }
 
 void UPlayerStats::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -89,7 +103,7 @@ void UPlayerStats::Sprint(const FVector Dir)
 		return;
 	}
 
-	if (CurrentStamina <= 0)
+	if (CurrentStamina <= 0 && MovementMode == EPlayerMovementMode::Sprinting || CurrentStamina <= CurrentMaxStamina * 0.2f)
 	{
 		Run(Dir);
 		return;
@@ -128,6 +142,79 @@ FVector UPlayerStats::GetBallDirection() const
 	return (AGOBPManager::GetInstance()->GetBall()->GetActorLocation() - GetOwner()->GetActorLocation()).GetSafeNormal();
 }
 
+
+AActor* UPlayerStats::GetHomeGoal() const
+{
+	if (AGOBPManager::GetInstance() == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
+		return nullptr;
+	}
+	
+	if (Team == ETeam::Home)
+	{
+		return AGOBPManager::GetInstance()->GetHomeGoal();
+	}
+	else
+	{
+		return AGOBPManager::GetInstance()->GetAwayGoal();
+	}
+}
+
+AActor* UPlayerStats::GetOpponentGoal() const
+{
+	if (AGOBPManager::GetInstance() == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
+		return nullptr;
+	}
+	
+	if (Team == ETeam::Away)
+	{
+		return AGOBPManager::GetInstance()->GetHomeGoal();
+	}
+	else
+	{
+		return AGOBPManager::GetInstance()->GetAwayGoal();
+	}
+}
+
+UStaticMeshComponent* UPlayerStats::GetBall()
+{
+	if (AGOBPManager::GetInstance() == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
+		return nullptr;
+	}
+
+	AActor* Ball = AGOBPManager::GetInstance()->GetBall();
+	if ( Ball == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Ball is null"));
+		return nullptr;
+	}
+
+	return Cast<UStaticMeshComponent>(Ball->GetRootComponent());
+}
+
+void UPlayerStats::PushBall(const FVector Dir, const float Force)
+{
+	if (AGOBPManager::GetInstance() == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
+		return;
+	}
+
+	AActor* Ball = AGOBPManager::GetInstance()->GetBall();
+	if ( Ball == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Ball is null"));
+		return;
+	}
+	
+	//Cast<UStaticMeshComponent>(Ball->GetRootComponent())->ComponentVelocity = FVector::Zero();
+	Cast<UStaticMeshComponent>(Ball->GetRootComponent())->AddImpulse(Dir * Force, NAME_None, true);
+}
 
 void UPlayerStats::SetMovementMode(const EPlayerMovementMode Mode)
 {

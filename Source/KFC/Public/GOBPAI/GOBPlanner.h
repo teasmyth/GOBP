@@ -58,7 +58,7 @@ public:
 	static TSharedPtr<BT_RootNode> ConstructBT(const TSharedPtr<Node>& InBTRootNode);
 	static void PopulateBT(const TSharedPtr<BT_SequencerNode>& OutRootNode, const TSharedPtr<Node>& InRootNode);
 	
-	static void MergePlans(const TSharedPtr<Node>& MainPlan, const TArray<TSharedPtr<Node>>& Leaves);
+	static void MergePlan(const TSharedPtr<Node>& MainPlan, const TSharedPtr<Node>& OtherPlan);
 	static void PrioritizeCost(const TSharedPtr<Node>& Parent);
 
 

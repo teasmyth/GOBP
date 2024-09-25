@@ -21,12 +21,15 @@ public:
 //	void TraverseSetOwner(AActor* InActor);
 	//void CalculateCosts() const;
 
+	//Runs the behaviour tree, returns true if it has resulted with either Success or Failure. Otherwise returns false.
+	bool RunTree(UPlayerStats* Player);
+
+	virtual void ResetNode() override;
 
 
 protected:
 	virtual void OnStart(UPlayerStats* Player) override;
 	virtual void OnExit(UPlayerStats* Player) override;
-	virtual void ResetNode() override;
 };
 
 

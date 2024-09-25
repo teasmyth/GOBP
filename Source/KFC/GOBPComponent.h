@@ -17,6 +17,8 @@ public:
 	// Sets default values for this component's properties
 	UGOBPComponent();
 
+	
+
 	UPROPERTY(EditAnywhere)
 	UPlayerStats* PlayerStats = nullptr;
 
@@ -29,15 +31,21 @@ public:
 	UPROPERTY(EditAnywhere, meta = (Tooltip = "The goals that the AI will try to achieve. Higher values mean higher priority."))
 	TSet<FWorldState> Goals;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere)
 	UBehaviorTreeComponent* BehaviorTreeComponent = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere)
 	UBlackboardComponent* BlackboardComponent = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere)
 	UBehaviorTree* BehaviorTree = nullptr;
 
+	UFUNCTION(CallInEditor, Category = "GOBP")
+	void PauseUnpauseTree()
+	{
+		bRunTree = !bRunTree;
+	}
+	
 	TSharedPtr<BT_RootNode> RootNode;
 
 protected:
@@ -51,4 +59,6 @@ public:
 
 private:
 	void FindAllActions();
+	bool bRunTree = true;
+
 };

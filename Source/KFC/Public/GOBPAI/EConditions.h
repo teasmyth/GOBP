@@ -12,21 +12,22 @@
 UENUM(BlueprintType)
 enum class EConditions : uint8
 {
-	None            = 0 UMETA(DisplayName = "None"),
-	Divider			= 1 UMETA(DisplayName = "----------"),
-	HasBall         = 2 UMETA(DisplayName = "Has Ball"),
-	ClearShot       = 3 UMETA(DisplayName = "Clear Shot"),
-	ClearPass       = 4 UMETA(DisplayName = "Clear Pass"),
-	Shoot           = 5 UMETA(DisplayName = "Shoot"),
-	Corners         = 6 UMETA(DisplayName = "Corners"),
-	Pass            = 7 UMETA(DisplayName = "Pass"),
-	ObstructedShot  = 8 UMETA(DisplayName = "Obstructed Shot"),
-	ObstructedPass  = 9 UMETA(DisplayName = "Obstructed Pass"),
-	Defend          = 10 UMETA(DisplayName = "Defend"),
-	Intercept       = 11 UMETA(DisplayName = "Intercept"),
-	Mark            = 12 UMETA(DisplayName = "Mark"),
-	Pressure        = 13 UMETA(DisplayName = "Pressure"),
-	
+	None = 0 UMETA(DisplayName = "None"),
+	Divider = 1 UMETA(DisplayName = "----------"),
+	HasBall = 2 UMETA(DisplayName = "Has Ball"),
+	ClearShot = 3 UMETA(DisplayName = "Clear Shot"),
+	ClearPass = 4 UMETA(DisplayName = "Clear Pass"),
+	Shoot = 5 UMETA(DisplayName = "Shoot"),
+	Corners = 6 UMETA(DisplayName = "Corners"),
+	Pass = 7 UMETA(DisplayName = "Pass"),
+	ObstructedShot = 8 UMETA(DisplayName = "Obstructed Shot"),
+	ObstructedPass = 9 UMETA(DisplayName = "Obstructed Pass"),
+	Defend = 10 UMETA(DisplayName = "Defend"),
+	Intercept = 11 UMETA(DisplayName = "Intercept"),
+	Mark = 12 UMETA(DisplayName = "Mark"),
+	Pressure = 13 UMETA(DisplayName = "Pressure"),
+	BallAction = 14 UMETA(DisplayName = "Ball Action"),
+	NoBall = 15 UMETA(DisplayName = "No Ball"),
 };
 
 FORCEINLINE uint32 GetTypeHash(const EConditions& Condition)

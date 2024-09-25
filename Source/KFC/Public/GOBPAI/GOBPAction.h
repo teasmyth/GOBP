@@ -13,10 +13,10 @@
 UENUM(BlueprintType)
 enum class EActionType : uint8
 {
-	Null,
-	Action,
-	Selector,
-	Picker,
+	Null = 0 UMETA(DisplayName = "Null", ToolTip = "Null action, used for initialization."),
+	Action = 1 UMETA(DisplayName = "Action", ToolTip = "Action to be taken by the player."),
+	Selector = 2 UMETA(DisplayName = "Selector", ToolTip = "Selector node to determine the next action. It will run every successful child"),
+	Picker = 3 UMETA(DisplayName = "Picker", ToolTip = "Picker node to determine the next action. It will run only first child that meets conditions."),
 	Decorator
 };
 

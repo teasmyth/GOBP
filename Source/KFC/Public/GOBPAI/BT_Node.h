@@ -22,6 +22,7 @@ public:
 	EBT_NodeState State = Running;
 	bool Started = false;
 	UGobpAction* Action = nullptr;
+	bool bIsRootNode = false;
 	
 
 	virtual EBT_NodeState Update(UPlayerStats* Player) final;

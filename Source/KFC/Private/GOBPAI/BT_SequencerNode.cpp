@@ -21,6 +21,10 @@ void BT_SequencerNode::OnStart(UPlayerStats* Player)
 		SelectedOutcome = Action->PickNextAction(Player);
 		SelectorFnEmpty = SelectedOutcome.IsEmpty();
 	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
+	}
 }
 
 void BT_SequencerNode::OnExit(UPlayerStats* Player)
@@ -29,13 +33,27 @@ void BT_SequencerNode::OnExit(UPlayerStats* Player)
 	{
 		Action->EndAction(Player);
 	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
+	}
 }
 
 EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 {
-	if (Children.Num() == 0 || SelectorFnEmpty)
+	if (Action == nullptr)
 	{
-		if (SelectorFnEmpty)
+		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
+		return Failure;
+	}
+
+	Action->ExecuteAction(Player);
+	
+	SelectedOutcome = Action->PickNextAction(Player);
+	
+	if (Children.Num() == 0 || SelectedOutcome.IsEmpty())
+	{
+		if (SelectedOutcome.IsEmpty())
 		{
 			if (Action != nullptr)
 			{
@@ -52,17 +70,8 @@ EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 		}
 		return Failure;
 	}
-
-
-	bool ReturnFail = true;
-
-	if (Action == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
-		return Failure;
-	}
-
-
+	
+	
 	if (Action->ActionType == EActionType::Selector)
 	{
 		bool IsRunning = false;
@@ -94,6 +103,6 @@ EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("No action was selected for %s or all actions failed."), *NodeName);
+	//UE_LOG(LogTemp, Warning, TEXT("No action was selected for %s or all actions failed."), *NodeName);
 	return Failure;
 }

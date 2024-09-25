@@ -12,6 +12,13 @@
  */
 
 UENUM()
+enum class ETeam : uint8
+{
+	Home,
+	Away
+};
+
+UENUM()
 enum class EPlayerMovementMode : uint8
 {
 	Walking,
@@ -30,11 +37,13 @@ public:
 
 	explicit UPlayerStats(const int32 PlayerID, const int32 MaxStamina, const int32 Speed, const int32 Acceleration, const int32 Strength,
 	                      const int32 Passing, const int32 Accuracy, const int32 Defense, const int32 Tackling, const int32 Goalkeeping,
-	                      const int32 BallSkills, const int32 Shooting, const int32 Dribbling, const int32 Positioning, const int32 Vision)
+	                      const int32 BallSkills, const int32 Shooting, const int32 Dribbling, const int32 Positioning, const int32 Vision,
+	                      const ETeam Team)
 	{
 		this->PlayerID = PlayerID;
-		this->MaxStamina = MaxStamina;
+		this->Team = Team;
 		
+		this->MaxStamina = MaxStamina;
 		this->Speed = Speed;
 		this->Acceleration = Acceleration;
 		this->Strength = Strength;
@@ -59,6 +68,20 @@ public:
 			DefaultSpeed = MovementComponent->MaxWalkSpeed;
 		}
 	}
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBallOwned, UPlayerStats*, Player);
+
+	UPROPERTY(BlueprintAssignable, DisplayName= "Ball Owned Event") 
+	FOnBallOwned OnBallOwned;
+
+	UFUNCTION(BlueprintCallable, Category = "Player Stats")
+	void SetHasBall(UPlayerStats* Player);
+
+	UFUNCTION(BlueprintCallable, Category = "Player Stats")
+	bool HasBall() const
+    {
+        return bHasBall;
+    }
 
 	UFUNCTION(BlueprintGetter)
 	int32 GetPlayerID() const
@@ -201,9 +224,12 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	int32 PlayerID;
+
+	UPROPERTY(EditAnywhere, Category = "Player Stats")
+	ETeam Team = ETeam::Home;
+
 
 	//Movement
 	UPROPERTY(EditAnywhere, Category = "Player Stats/Movement")
@@ -252,13 +278,30 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	EPlayerMovementMode MovementMode = EPlayerMovementMode::Walking;
-	
+
 	float InternalTimer = 0.0f;
 
 	//Important for normalizing the movement across all agents, so the speed stats are relative to each other.
 	float DefaultSpeed = 0.0f;
 	UPROPERTY()
 	UCharacterMovementComponent* MovementComponent = nullptr;
+
+
+	UFUNCTION(BlueprintCallable, Category = "Player Stats")	
+	AActor* GetHomeGoal() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Player Stats")
+    AActor* GetOpponentGoal() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Player Stats")
+    UStaticMeshComponent* GetBall();
+
+	UFUNCTION(BlueprintCallable, Category = "Player Stats")
+    void PushBall(const FVector Dir, const float Force);
+
+	
+
+	bool bHasBall;
 
 
 	void SetMovementMode(const EPlayerMovementMode Mode);
