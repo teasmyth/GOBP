@@ -3,6 +3,7 @@
 
 #include "GOBPAI/GOBPManager.h"
 
+#include "Football/FootballBall.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -55,7 +56,7 @@ void AGOBPManager::BeginPlay()
 	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("Ball"), BallActors);
 	if (BallActors.Num() == 1)
 	{
-		Ball = BallActors[0];
+		Ball = BallActors[0]->FindComponentByClass<UFootballBall>();
 	}
 	else
 	{

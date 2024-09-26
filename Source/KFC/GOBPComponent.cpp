@@ -19,27 +19,6 @@ UGOBPComponent::UGOBPComponent()
 }
 
 
-void UGOBPComponent::PushBall()
-{
-	if (AGOBPManager::GetInstance() == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
-		return;
-	}
-
-	AActor* Ball = AGOBPManager::GetInstance()->GetBall();
-	if ( Ball == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Ball is null"));
-		return;
-	}
-
-	const FVector Dir = FVector(0,1,-0);
-	
-	//Cast<UStaticMeshComponent>(Ball->GetRootComponent())->ComponentVelocity = FVector::Zero();
-	Cast<UStaticMeshComponent>(Ball->GetRootComponent())->AddImpulse(Dir * 1000, NAME_None, true);
-}
-
 // Called when the game starts
 void UGOBPComponent::BeginPlay()
 {
@@ -83,10 +62,6 @@ void UGOBPComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	BehaviorTreeComponent = nullptr;
 	BlackboardComponent = nullptr;
 	RootNode = nullptr;
-	for (const auto& Action : Actions)
-	{
-		delete Action;
-	}
 	Actions.Empty();
 }
 

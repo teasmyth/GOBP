@@ -125,24 +125,6 @@ void UPlayerStats::Jockey(const FVector Dir)
 {
 }
 
-FVector UPlayerStats::GetBallDirection() const
-{
-	if (AGOBPManager::GetInstance() == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
-		return FVector::ZeroVector;
-	}
-
-	if (AGOBPManager::GetInstance()->GetBall() == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Ball is null"));
-		return FVector::ZeroVector;
-	}
-
-	return (AGOBPManager::GetInstance()->GetBall()->GetActorLocation() - GetOwner()->GetActorLocation()).GetSafeNormal();
-}
-
-
 AActor* UPlayerStats::GetHomeGoal() const
 {
 	if (AGOBPManager::GetInstance() == nullptr)
@@ -177,43 +159,6 @@ AActor* UPlayerStats::GetOpponentGoal() const
 	{
 		return AGOBPManager::GetInstance()->GetAwayGoal();
 	}
-}
-
-UStaticMeshComponent* UPlayerStats::GetBall()
-{
-	if (AGOBPManager::GetInstance() == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
-		return nullptr;
-	}
-
-	AActor* Ball = AGOBPManager::GetInstance()->GetBall();
-	if ( Ball == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Ball is null"));
-		return nullptr;
-	}
-
-	return Cast<UStaticMeshComponent>(Ball->GetRootComponent());
-}
-
-void UPlayerStats::PushBall(const FVector Dir, const float Force)
-{
-	if (AGOBPManager::GetInstance() == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
-		return;
-	}
-
-	AActor* Ball = AGOBPManager::GetInstance()->GetBall();
-	if ( Ball == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Ball is null"));
-		return;
-	}
-	
-	//Cast<UStaticMeshComponent>(Ball->GetRootComponent())->ComponentVelocity = FVector::Zero();
-	Cast<UStaticMeshComponent>(Ball->GetRootComponent())->AddImpulse(Dir * Force, NAME_None, true);
 }
 
 void UPlayerStats::SetMovementMode(const EPlayerMovementMode Mode)

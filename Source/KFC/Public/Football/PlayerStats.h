@@ -204,8 +204,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Jockey(const FVector Dir);
 
-	UFUNCTION(BlueprintCallable)
-	FVector GetBallDirection() const;
+	
 
 	UFUNCTION(BlueprintCallable)
 	void ResetTimer()
@@ -292,13 +291,6 @@ private:
 
 	UFUNCTION(BlueprintCallable, Category = "Player Stats")
     AActor* GetOpponentGoal() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Player Stats")
-    UStaticMeshComponent* GetBall();
-
-	UFUNCTION(BlueprintCallable, Category = "Player Stats")
-    void PushBall(const FVector Dir, const float Force);
-
 	
 
 	bool bHasBall;

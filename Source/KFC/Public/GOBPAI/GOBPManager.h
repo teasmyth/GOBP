@@ -7,6 +7,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GOBPManager.generated.h"
 
+class UFootballBall;
+
 UCLASS()
 class KFC_API AGOBPManager : public AActor
 {
@@ -33,7 +35,9 @@ public:
 	float GetRunModifier() const { return RunModifier;}
 	float GetJockeyModifier() const { return JockeyModifier; }
 	float GetStaminaLossRatioPerUsedStamina() const { return StaminaLossRatioPerUsedStamina; }
-	AActor* GetBall() const { return Ball; }
+
+	UFUNCTION(BlueprintCallable, Category = "GOBP")
+	UFootballBall* GetBall() const { return Ball; }
 
 
 	UPROPERTY(EditAnywhere, Category = "GOBP")
@@ -64,7 +68,7 @@ private:
 	static AGOBPManager* Instance;
 
 	UPROPERTY()
-    AActor* Ball;
+    UFootballBall* Ball;
 
 
 };
