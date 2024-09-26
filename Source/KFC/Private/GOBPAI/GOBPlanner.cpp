@@ -1,8 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "GOBPAI/GOBPlanner.h"
-
 #include "BehaviorTree/BTTaskNode.h"
 #include "BehaviorTree/Composites/BTComposite_Selector.h"
 #include "GOBPAI/BT_SequencerNode.h"
@@ -17,7 +15,8 @@ GOBPlanner::~GOBPlanner()
 }
 
 
-bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Priority, const TArray<UGobpAction*>& InActions, const TSet<FWorldState>& InGoals, UBehaviorTree*& OutUnrealBT, TSharedPtr<BT_RootNode>& OutRootNode)
+bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Priority, const TArray<UGobpAction*>& InActions,
+                      const TSet<FWorldState>& InGoals, UBehaviorTree*& OutUnrealBT, TSharedPtr<BT_RootNode>& OutRootNode)
 {
 	TArray<FWorldState> SortedGoals = InGoals.Array();
 
@@ -26,8 +25,7 @@ bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Pri
 		SortedGoals.Sort(&CompareGoalPriority);
 	}
 
-	
-	
+
 	TArray<TSharedPtr<Node>> StartNodes;
 
 	//This ensures that all actions that can lead to a goal are stored.
@@ -44,7 +42,7 @@ bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Pri
 			}
 		}
 	}
-	
+
 	TArray<UGobpAction*> UsedActions = InActions;
 
 	for (const auto GoalAction : GoalActions)
@@ -64,7 +62,7 @@ bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Pri
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Plan Found"));
 		UE_LOG(LogTemp, Warning, TEXT("No Plan Found"));
-		
+
 		return false;
 	}
 
@@ -78,13 +76,13 @@ bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Pri
 		{
 			MergePlan(MainPlan, StartNode);
 		}
-		
+
 		if (Priority == EPriority::PrioritizeCost)
 		{
 			PrioritizeCost(MainPlan);
 		}
 	}
-	
+
 	OutUnrealBT = ConstructUnrealBT(Outer, MainPlan);
 	OutRootNode = ConstructBT(MainPlan);
 
@@ -93,33 +91,32 @@ bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Pri
 
 void GOBPlanner::MergePlan(const TSharedPtr<Node>& MainPlan, const TSharedPtr<Node>& OtherPlan)
 {
-	
-		if (*MainPlan == *OtherPlan) //this compares the UGobpActions they have, ensuring that they are the same action.
+	if (*MainPlan == *OtherPlan) //this compares the UGobpActions they have, ensuring that they are the same action.
+	{
+		for (const auto& NewLeaf : OtherPlan->Leaves)
 		{
-			for (const auto& NewLeaf : OtherPlan->Leaves)
+			bool MainLeafHasTheAction = false;
+			for (const auto& MainLeaf : MainPlan->Leaves)
 			{
-				bool MainLeafHasTheAction = false;
-				for (const auto& MainLeaf : MainPlan->Leaves)
+				if (*MainLeaf == *NewLeaf)
 				{
-					if (*MainLeaf == *NewLeaf)
-					{
-						MergePlan(MainLeaf, NewLeaf);
-						MainLeafHasTheAction = true;
-						break;
-					}
-				}
-				//Meaning that the action is not present in the main plan, however because they share the same parents, it can be added to the main plan.
-				if (!MainLeafHasTheAction)
-				{
-					MainPlan->Leaves.Add(NewLeaf);
+					MergePlan(MainLeaf, NewLeaf);
+					MainLeafHasTheAction = true;
+					break;
 				}
 			}
-		}
-		else
-		{
-			MainPlan->Leaves.Add(OtherPlan);
+			//Meaning that the action is not present in the main plan, however because they share the same parents, it can be added to the main plan.
+			if (!MainLeafHasTheAction)
+			{
+				MainPlan->Leaves.Add(NewLeaf);
+			}
 		}
 	}
+	else
+	{
+		MainPlan->Leaves.Add(OtherPlan);
+	}
+}
 
 
 bool GOBPlanner::FindPath(UPlayerStats* Player, const TSharedPtr<Node>& Child, TArray<UGobpAction*> UsableActions, TSharedPtr<Node>& EndNode)
@@ -154,7 +151,8 @@ bool GOBPlanner::FindPath(UPlayerStats* Player, const TSharedPtr<Node>& Child, T
 		*/
 
 
-		const TSharedPtr<Node> NewNode = MakeShareable(new Node(nullptr, Child->Cost + Action->GetCost(Player), Action->PreConditions.Array(), Action));
+		const TSharedPtr<Node> NewNode = MakeShareable(
+			new Node(nullptr, Child->Cost + Action->GetCost(Player), Action->PreConditions.Array(), Action));
 		Child->Parent = NewNode;
 		NewNode->Leaves.Add(Child);
 
@@ -225,60 +223,37 @@ void GOBPlanner::PopulateUnrealBT(const TSharedPtr<Node>& Node, UBTCompositeNode
 	}
 }
 
-TSharedPtr<BT_RootNode> GOBPlanner::ConstructBT(const TSharedPtr<Node>& InBTRootNode)
+TSharedPtr<BT_RootNode> GOBPlanner::ConstructBT(const TSharedPtr<Node>& InPathFindRootNode)
 {
 	const TSharedPtr<BT_RootNode> RootNode = MakeShareable(new BT_RootNode());
-	const TSharedPtr<BT_SequencerNode> RootChild = MakeShareable(new BT_SequencerNode(InBTRootNode->Action));
+	const TSharedPtr<BT_SequencerNode> RootChild = MakeShareable(new BT_SequencerNode(InPathFindRootNode->Action));
 	RootNode->Child = RootChild;
-	PopulateBT(RootChild, InBTRootNode);
+	PopulateBT(RootChild, InPathFindRootNode);
 
-	UE_LOG(LogTemp, Warning, TEXT("RootNode: %s"), *RootNode->NodeName);
 	return RootNode;
 }
 
-//todo rename params todo
-
-void GOBPlanner::PopulateBT(const TSharedPtr<BT_SequencerNode>& OutRootNode, const TSharedPtr<Node>& InRootNode)
+void GOBPlanner::PopulateBT(const TSharedPtr<BT_SequencerNode>& InBT_Node, const TSharedPtr<Node>& InPathFindNode)
 {
-	/*
-	if (InRootNode->Leaves.IsEmpty())
+	if (InPathFindNode->Leaves.IsEmpty())
 	{
-		const TSharedPtr<BT_ActionNode> NewActionNode = MakeShareable(new BT_ActionNode(InRootNode->Action));
-		OutRootNode->AddChild(NewActionNode);
+		const TSharedPtr<BT_ActionNode> NewActionNode = MakeShareable(new BT_ActionNode(InPathFindNode->Action));
+		InBT_Node->AddChild(NewActionNode);
 	}
 	else
 	{
-		const TSharedPtr<BT_SequencerNode> NewSequencerNode = MakeShareable(new BT_SequencerNode(InRootNode->Action));
-		OutRootNode->AddChild(NewSequencerNode);
-		for (const auto& Child : InRootNode->Leaves)
-		{
-			PopulateBT(NewSequencerNode, Child);
-		}
-	}
-	*/
-
-	if (InRootNode->Leaves.IsEmpty())
-	{
-		const TSharedPtr<BT_ActionNode> NewActionNode = MakeShareable(new BT_ActionNode(InRootNode->Action));
-		OutRootNode->AddChild(NewActionNode);
-	}
-	else
-	{
-		for (const auto& Child : InRootNode->Leaves)
+		for (const auto& Child : InPathFindNode->Leaves)
 		{
 			if (Child->Leaves.IsEmpty())
 			{
 				const TSharedPtr<BT_ActionNode> NewActionNode = MakeShareable(new BT_ActionNode(Child->Action));
-				OutRootNode->AddChild(NewActionNode);
+				InBT_Node->AddChild(NewActionNode);
 			}
 			else
 			{
 				const TSharedPtr<BT_SequencerNode> NewSequencerNode = MakeShareable(new BT_SequencerNode(Child->Action));
-				OutRootNode->AddChild(NewSequencerNode);
-				for (const auto& GrandChild : Child->Leaves)
-				{
-					PopulateBT(NewSequencerNode, GrandChild);
-				}
+				InBT_Node->AddChild(NewSequencerNode);
+				PopulateBT(NewSequencerNode, Child);
 			}
 		}
 	}

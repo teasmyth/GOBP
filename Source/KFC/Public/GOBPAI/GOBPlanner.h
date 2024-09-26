@@ -55,8 +55,8 @@ public:
 	static UBehaviorTree* ConstructUnrealBT(UObject* Outer, const TSharedPtr<Node>& Node);
 	static void PopulateUnrealBT(const TSharedPtr<Node>& Node, UBTCompositeNode* ParentNode, UBehaviorTree* Tree);
 
-	static TSharedPtr<BT_RootNode> ConstructBT(const TSharedPtr<Node>& InBTRootNode);
-	static void PopulateBT(const TSharedPtr<BT_SequencerNode>& OutRootNode, const TSharedPtr<Node>& InRootNode);
+	static TSharedPtr<BT_RootNode> ConstructBT(const TSharedPtr<Node>& InPathFindRootNode);
+	static void PopulateBT(const TSharedPtr<BT_SequencerNode>& InBT_Node, const TSharedPtr<Node>& InPathFindNode);
 	
 	static void MergePlan(const TSharedPtr<Node>& MainPlan, const TSharedPtr<Node>& OtherPlan);
 	static void PrioritizeCost(const TSharedPtr<Node>& Parent);

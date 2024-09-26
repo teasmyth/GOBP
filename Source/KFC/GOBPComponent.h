@@ -45,6 +45,9 @@ public:
 	{
 		bRunTree = !bRunTree;
 	}
+
+	UFUNCTION(CallInEditor, Category = "GOBP")
+	void PushBall();
 	
 	TSharedPtr<BT_RootNode> RootNode;
 

@@ -104,5 +104,5 @@ EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 	}
 
 	//UE_LOG(LogTemp, Warning, TEXT("No action was selected for %s or all actions failed."), *NodeName);
-	return Failure;
+	return Running;
 }
