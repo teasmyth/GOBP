@@ -43,19 +43,25 @@ bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Pri
 		}
 	}
 
-	TArray<UGobpAction*> UsedActions = InActions;
+	TArray<UGobpAction*> UsedActions = InActions; //why is clear shot action not in the plan>?
 
 	for (const auto GoalAction : GoalActions)
 	{
 		//We pass in an empty node, whose conditions will be satisfied by the first 'final' action. E.g. Shoot, Pass, etc.
+		if (GoalAction.Action->Name == "Clear Shot Action")
+		{
+			int32 a = 0;
+		}
 		TSharedPtr<Node> GoalNode = MakeShareable(new Node(nullptr, GoalAction.Action->GetCost(Player), GoalAction.Goals, nullptr));
 
 		if (TSharedPtr<Node> StartNode = nullptr; FindPath(Player, GoalNode, UsedActions, StartNode))
 		{
-			UsedActions.Remove(GoalAction.Action);
 			GoalNode->Parent->Leaves.Empty(); //Deleting the empty goal node.
 			StartNodes.Add(StartNode);
 		}
+		UsedActions.Remove(GoalAction.Action); //We remove this regardless of success or failure, as it is not needed anymore.
+
+		//UE_LOG(LogTemp, Warning, TEXT("Goal Node Cost: %d"), GoalNode->Cost);
 	}
 
 	if (StartNodes.Num() == 0)

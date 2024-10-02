@@ -50,31 +50,31 @@ public:
 	//Visualization and data-loss prevention. I know it is ugly and perhaps there is a solution to this, but I am not aware of it.
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "GOBP")
 	TArray<EConditions> AfterEffects; //This is used to publicly show the effects of the action for each possible outcome.
-	TArray<TArray<EConditions>> Effects; //This is used to store the effects of the action for each possible outcome.
+	
 	
 	bool Running = false;
 	
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")
-	bool IsAchievableBP();
-	//By default, it will call the Blueprint version. This way, we can use actions both in C++ and BP with single function.
-	//The purpose of this function to check if an action is achievable given the world state.
-	virtual bool IsAchievable();
+	//The purpose of this function to check if an action is achievable given the world state run time, not in planning phase.
+	bool IsAchievableBP(UPlayerStats* Player);
+	//The purpose of this function to check if an action is achievable given the world state run time, not in planning phase.
+	virtual bool IsAchievable(UPlayerStats* Player);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")
+	//The purpose of this function is to evaluate whether this action can be executed given the previous action's outcome in the planning phase.
 	bool IsAchievableGivenConditionsBP(const TArray<EConditions>& InConditions);
-	//By default, it will call the Blueprint version. This way, we can use actions both in C++ and BP with single function.
-	//The purpose of this function is to evaluate whether this action can be executed given the previous action's outcome.
+	//The purpose of this function is to evaluate whether this action can be executed given the previous action's outcome in the planning phase.
 	virtual bool IsAchievableGivenConditions(const TArray<EConditions>& InConditions);
 
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")
-	void StartActionBP(UPlayerStats* Player);
-	virtual void StartAction(UPlayerStats* Player);
+	EBT_NodeState StartActionBP(UPlayerStats* Player);
+	virtual EBT_NodeState StartAction(UPlayerStats* Player);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")
-	void EndActionBP(UPlayerStats* Player);
-	virtual void EndAction(UPlayerStats* Player);
+	EBT_NodeState EndActionBP(UPlayerStats* Player);
+	virtual EBT_NodeState EndAction(UPlayerStats* Player);
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")
 	EBT_NodeState ExecuteActionBP(UPlayerStats* Player);
@@ -90,18 +90,25 @@ public:
 	virtual float CalculateCost(UPlayerStats* Player);
 
 	float GetCost(UPlayerStats* Player) { return CalculateCost(Player); }
-
-	//Checking if of the preconditions of the new node can be satisfied by the current node's effects.
-	virtual bool CanBeDoneBeforeNewAction(const TArray<EConditions>& InConditions) const;
+	
+	//The purpose of this function is to evaluate whether this action can be executed given the previous action's outcome in the planning phase.
+	bool CanBeDoneBeforeNewAction(const TArray<EConditions>& InConditions) const;
 	void SetupAction();
 
 private:
 	void ConvertEffectsToTArray();
+	TArray<TArray<EConditions>> Effects; //This is used to store the effects of the action for each possible outcome.
 	
 	//This function is used to add the preconditions of the action to the after effects of the action.
 	//This way, we don't have to write every condition carrying over to the next action.
 	//Otherwise, every action would have to carry over the conditions of the previous action.
 	void AddConditionsToAfterEffects();
 
-	
+
+protected:
+	UFUNCTION(BlueprintCallable, Category = "GOBP Action")
+	bool IsStraightLineClear(UPlayerStats* Player, const AActor* Target) const;
+
+	UFUNCTION(BlueprintCallable, Category = "GOBP Action")
+	float RandomAccuracyMultiplier(const UPlayerStats* Player) const;
 };

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "GOBPAI/GOBPAction.h"
 #include "GOBPManager.generated.h"
 
 class UFootballBall;
@@ -18,7 +18,8 @@ public:
 	// Sets default values for this actor's properties
 	AGOBPManager();
 
-	static AGOBPManager* GetInstance();
+	UFUNCTION(BlueprintPure, Category = "GOBP Manager")
+	static AGOBPManager* GetGOBPManagerInstance();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GOBP")
 	bool ThisInstance = false;
@@ -31,10 +32,15 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	bool IsSetup() const { return bIsSetup; }
+	TArray<UGobpAction*> GetActions() const { return Actions; }
 	float GetSpeedDiffMultiplier() const { return SpeedDifferenceModifier; }
 	float GetRunModifier() const { return RunModifier;}
 	float GetJockeyModifier() const { return JockeyModifier; }
 	float GetStaminaLossRatioPerUsedStamina() const { return StaminaLossRatioPerUsedStamina; }
+
+	UFUNCTION(BlueprintPure)
+	float GetMaxStrengthShootDistance() const { return MaxStrengthShootDistance; }
 
 	UFUNCTION(BlueprintCallable, Category = "GOBP")
 	UFootballBall* GetBall() const { return Ball; }
@@ -52,23 +58,34 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GOBP")
 	AActor* GetAwayGoal() const { return AwayGoal; }
 
+	
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GOBP")
-	float RunModifier;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GOBP")
-	float SpeedDifferenceModifier;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GOBP")
-	float JockeyModifier;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GOBP")
-	float StaminaLossRatioPerUsedStamina;
 
 private:
 	static AGOBPManager* Instance;
 
+	UPROPERTY(EditAnywhere, Category = "GOBP")
+	TArray<UGobpAction*> Actions;
+
 	UPROPERTY()
     UFootballBall* Ball;
 
+	UPROPERTY(EditAnywhere, Category = "GOBP")
+	float RunModifier;
 
+	UPROPERTY(EditAnywhere, Category = "GOBP")
+	float SpeedDifferenceModifier;
+	UPROPERTY(EditAnywhere, Category = "GOBP")
+	float JockeyModifier;
+
+	UPROPERTY(EditAnywhere, Category = "GOBP")
+	float StaminaLossRatioPerUsedStamina;
+
+	UPROPERTY(EditAnywhere, Category = "GOBP")
+	float MaxStrengthShootDistance;
+
+	bool bIsSetup = false;
+
+
+	void FindAllActions();
 };

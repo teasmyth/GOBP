@@ -27,6 +27,9 @@ enum class EPlayerMovementMode : uint8
 	Jockeying
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBallOwned, const UPlayerStats*, Player);
+
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class KFC_API UPlayerStats : public USceneComponent
 {
@@ -34,6 +37,12 @@ class KFC_API UPlayerStats : public USceneComponent
 
 public:
 	UPlayerStats();
+
+	static constexpr int32 MAX_STAT_NUMBER = 100;
+
+	
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnBallOwned OnBallOwned;
 
 	explicit UPlayerStats(const int32 PlayerID, const int32 MaxStamina, const int32 Speed, const int32 Acceleration, const int32 Strength,
 	                      const int32 Passing, const int32 Accuracy, const int32 Defense, const int32 Tackling, const int32 Goalkeeping,
@@ -68,14 +77,7 @@ public:
 			DefaultSpeed = MovementComponent->MaxWalkSpeed;
 		}
 	}
-
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBallOwned, UPlayerStats*, Player);
-
-	UPROPERTY(BlueprintAssignable, DisplayName= "Ball Owned Event") 
-	FOnBallOwned OnBallOwned;
-
-	UFUNCTION(BlueprintCallable, Category = "Player Stats")
-	void SetHasBall(UPlayerStats* Player);
+	
 
 	UFUNCTION(BlueprintCallable, Category = "Player Stats")
 	bool HasBall() const
@@ -83,101 +85,110 @@ public:
         return bHasBall;
     }
 
-	UFUNCTION(BlueprintGetter)
+#pragma region  Getters
+	UFUNCTION(BlueprintPure)
 	int32 GetPlayerID() const
 	{
 		return PlayerID;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	int32 GetMaxStamina() const
 	{
 		return MaxStamina;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	int32 GetCurrentStamina() const
 	{
 		return CurrentStamina;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
+	int32 GetCurrentMaxStamina() const
+	{
+		return CurrentMaxStamina;
+	}
+
+	UFUNCTION(BlueprintPure)
 	int32 GetSpeed() const
 	{
 		return Speed;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	int32 GetAcceleration() const
 	{
 		return Acceleration;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	int32 GetStrength() const
 	{
 		return Strength;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	int32 GetPassing() const
 	{
 		return Passing;
 	}
 
-	UFUNCTION(BlueprintGetter)
-	int32 GetAccuracy() const
+	UFUNCTION(BlueprintPure)
+	float GetAccuracy() const
 	{
 		return Accuracy;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	int32 GetDefense() const
 	{
 		return Defense;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	int32 GetTackling() const
 	{
 		return Tackling;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	int32 GetGoalkeeping() const
 	{
 		return Goalkeeping;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	int32 GetBallSkills() const
 	{
 		return BallSkills;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	int32 GetShooting() const
 	{
 		return Shooting;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	int32 GetDribbling() const
 	{
 		return Dribbling;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	int32 GetPositioning() const
 	{
 		return Positioning;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	int32 GetVision() const
 	{
 		return Vision;
 	}
+
+#pragma endregion 
 
 	UFUNCTION(BlueprintCallable)
 	void AddStamina(const int32 Stamina)
@@ -189,7 +200,7 @@ public:
 		}
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	bool CanSprint() const
 	{
 		return CurrentStamina > 0;
@@ -212,7 +223,7 @@ public:
 		InternalTimer = 0.0f;
 	}
 
-	UFUNCTION(BlueprintGetter)
+	UFUNCTION(BlueprintPure)
 	UCharacterMovementComponent* GetMovementComponent() const
 	{
 		return MovementComponent;
@@ -221,6 +232,7 @@ public:
 protected:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
@@ -280,6 +292,15 @@ private:
 
 	float InternalTimer = 0.0f;
 
+	UFUNCTION(BlueprintCallable, Category = "Player Stats")
+	void SetControllingBall(const bool Value);
+	UFUNCTION(BlueprintCallable, Category = "Player Stats")
+	bool IsControllingBall() const
+	{
+		return bIsControllingBall;
+	}
+	bool bIsControllingBall = false;
+
 	//Important for normalizing the movement across all agents, so the speed stats are relative to each other.
 	float DefaultSpeed = 0.0f;
 	UPROPERTY()
@@ -293,6 +314,9 @@ private:
     AActor* GetOpponentGoal() const;
 	
 
+	
+	UFUNCTION()
+	void SetHasBall(const UPlayerStats* Player);
 	bool bHasBall;
 
 
