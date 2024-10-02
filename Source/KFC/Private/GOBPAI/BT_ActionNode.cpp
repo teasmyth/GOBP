@@ -12,16 +12,18 @@ BT_ActionNode::~BT_ActionNode()
 }
 
 
-void BT_ActionNode::OnStart(UPlayerStats* Player)
+EBT_NodeState BT_ActionNode::OnStart(UPlayerStats* Player)
 {
 	if (Action != nullptr)
 	{
-		Action->StartAction(Player);
+		const auto o = Action->StartAction(Player);
+		//return Action->StartAction(Player);
+
+		return o;
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
-	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
+	return Failure;
 }
 
 void BT_ActionNode::OnExit(UPlayerStats* Player)
@@ -30,7 +32,7 @@ void BT_ActionNode::OnExit(UPlayerStats* Player)
 	{
 		Action->EndAction(Player);
 	}
-	else 
+	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
 	}

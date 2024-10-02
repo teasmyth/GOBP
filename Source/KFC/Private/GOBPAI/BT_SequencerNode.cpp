@@ -13,18 +13,21 @@ BT_SequencerNode::~BT_SequencerNode()
 }
 
 
-void BT_SequencerNode::OnStart(UPlayerStats* Player)
+EBT_NodeState BT_SequencerNode::OnStart(UPlayerStats* Player)
 {
 	if (Action != nullptr)
 	{
-		Action->StartAction(Player);
+		if (const auto Outcome = Action->StartAction(Player); Outcome != Running)
+		{
+			return Outcome;
+		}
 		SelectedOutcome = Action->PickNextAction(Player);
 		SelectorFnEmpty = SelectedOutcome.IsEmpty();
+		return Running;
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
-	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
+	return Failure;
 }
 
 void BT_SequencerNode::OnExit(UPlayerStats* Player)
@@ -47,10 +50,9 @@ EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 		return Failure;
 	}
 
-	Action->ExecuteAction(Player);
-	
+
 	SelectedOutcome = Action->PickNextAction(Player);
-	
+
 	if (Children.Num() == 0 || SelectedOutcome.IsEmpty())
 	{
 		if (SelectedOutcome.IsEmpty())
@@ -70,8 +72,9 @@ EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 		}
 		return Failure;
 	}
-	
-	
+
+
+	/* needs more work, need to think it through.
 	if (Action->ActionType == EActionType::Selector)
 	{
 		bool IsRunning = false;
@@ -87,8 +90,15 @@ EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 			default: break;
 			}
 		}
-		return IsRunning ? Running : Failure;
+		if (IsRunning)
+		{
+			Action->ExecuteAction(Player);
+			return Running;
+		}
+		return Failure;
+		
 	}
+	*/
 
 	if (Action->ActionType == EActionType::Picker)
 	{
@@ -96,11 +106,13 @@ EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 		{
 			if (Child->Action == nullptr) continue;
 
-			if (SelectedOutcome == Child->Action->PreConditions.Array())
+			if (Child->Action->IsAchievable(Player) && SelectedOutcome == Child->Action->PreConditions.Array())
 			{
 				return Child->Update(Player);
 			}
 		}
+
+		Action->ExecuteAction(Player);
 	}
 
 	//UE_LOG(LogTemp, Warning, TEXT("No action was selected for %s or all actions failed."), *NodeName);

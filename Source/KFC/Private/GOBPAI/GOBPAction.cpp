@@ -8,9 +8,9 @@ UGobpAction::UGobpAction()
 {
 }
 
-bool UGobpAction::IsAchievable()
+bool UGobpAction::IsAchievable(UPlayerStats* Player)
 {
-	return IsAchievableBP();
+	return IsAchievableBP(Player);
 }
 
 bool UGobpAction::IsAchievableGivenConditions(const TArray<EConditions>& InConditions)
@@ -32,18 +32,19 @@ bool UGobpAction::IsAchievableGivenConditions(const TArray<EConditions>& InCondi
 	return true;
 }
 
-void UGobpAction::StartAction(UPlayerStats* Player)
+EBT_NodeState UGobpAction::StartAction(UPlayerStats* Player)
 {
-	StartActionBP(Player);
+	return StartActionBP(Player);
 }
 
-void UGobpAction::EndActionBP_Implementation(UPlayerStats* Player)
+EBT_NodeState UGobpAction::EndActionBP_Implementation(UPlayerStats* Player)
 {
+	return EBT_NodeState::Running;
 }
 
-void UGobpAction::EndAction(UPlayerStats* Player)
+EBT_NodeState UGobpAction::EndAction(UPlayerStats* Player)
 {
-	EndActionBP(Player);
+	return EndActionBP(Player);
 }
 
 EBT_NodeState UGobpAction::ExecuteActionBP_Implementation(UPlayerStats* Player)
@@ -77,41 +78,6 @@ float UGobpAction::CalculateCost(UPlayerStats* Player)
 	return CalculateCostBP(Player);
 }
 
-/*
-bool UGobpAction::CanBeDoneBeforeNewAction(const TArray<EConditions>& InConditions, TArray<EConditions>& OutUnsatisfiedConditions) const
-{
-	bool ContainsAtLeastOne = false;
-	TArray<EConditions> UnsatisfiedConditionsCopy = OutUnsatisfiedConditions;
-	
-	for (const auto& IndividualOutcomes : AfterEffects)
-	{
-		for (const auto& Condition : InConditions)
-		{
-			if (IndividualOutcomes.AfterEffects.Contains(Condition))
-			{
-				ContainsAtLeastOne = true;
-				if(UnsatisfiedConditionsCopy.Contains(Condition))
-				{
-					UnsatisfiedConditionsCopy.Remove(Condition);
-				}
-			}
-			else
-			{
-				UnsatisfiedConditionsCopy.Add(Condition);
-			}
-		}
-	}
-
-	if (ContainsAtLeastOne)
-	{
-		//We don't want to modify this unless we are using this action.
-		OutUnsatisfiedConditions = UnsatisfiedConditionsCopy;
-	}
-
-	return ContainsAtLeastOne;
-}
-*/
-
 bool UGobpAction::CanBeDoneBeforeNewAction(const TArray<EConditions>& InConditions) const
 {
 	bool OneIndividualOutcomeFullySatisfies = false;
@@ -138,8 +104,9 @@ float UGobpAction::CalculateCostBP_Implementation(UPlayerStats* Player)
 	return 0;
 }
 
-void UGobpAction::StartActionBP_Implementation(UPlayerStats* Player)
+EBT_NodeState UGobpAction::StartActionBP_Implementation(UPlayerStats* Player)
 {
+	return EBT_NodeState::Running;
 }
 
 bool UGobpAction::IsAchievableGivenConditionsBP_Implementation(const TArray<EConditions>& InConditions)
@@ -147,7 +114,7 @@ bool UGobpAction::IsAchievableGivenConditionsBP_Implementation(const TArray<ECon
 	return true;
 }
 
-bool UGobpAction::IsAchievableBP_Implementation()
+bool UGobpAction::IsAchievableBP_Implementation(UPlayerStats* Player)
 {
 	return true;
 }
@@ -188,5 +155,25 @@ void UGobpAction::AddConditionsToAfterEffects()
 		{
 			IndividualOutcome.Add(Condition);
 		}
+	}
+}
+
+bool UGobpAction::IsStraightLineClear(UPlayerStats* Player, const AActor* Target) const
+{
+	FHitResult HitR;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(Player->GetOwner());
+	return !GetWorld()->LineTraceSingleByChannel(HitR, Player->GetComponentLocation(), Target->GetActorLocation(), ECC_Visibility, CollisionParams);
+}
+
+float UGobpAction::RandomAccuracyMultiplier(const UPlayerStats* Player) const
+{
+	if (const int Rand = FMath::RandRange(0, 1); Rand == 0)
+	{
+		return Player->GetAccuracy() / UPlayerStats::MAX_STAT_NUMBER;
+	}
+	else
+	{
+		return UPlayerStats::MAX_STAT_NUMBER / Player->GetAccuracy();
 	}
 }

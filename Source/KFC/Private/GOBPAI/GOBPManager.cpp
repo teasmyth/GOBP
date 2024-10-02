@@ -3,6 +3,7 @@
 
 #include "GOBPAI/GOBPManager.h"
 
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Football/FootballBall.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -28,7 +29,7 @@ AGOBPManager::AGOBPManager()
 
 }
 
-AGOBPManager* AGOBPManager::GetInstance()
+AGOBPManager* AGOBPManager::GetGOBPManagerInstance()
 {
 	if (Instance == nullptr)
 	{
@@ -46,11 +47,13 @@ AGOBPManager* AGOBPManager::GetInstance()
 void AGOBPManager::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (GetInstance() != this || !ThisInstance)
+	
+	if (GetGOBPManagerInstance() != this || !ThisInstance)
 	{
 		Destroy();
 	}
+	
+	FindAllActions();
 
 	TArray<AActor*> BallActors;
 	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("Ball"), BallActors);
@@ -62,7 +65,8 @@ void AGOBPManager::BeginPlay()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Ball is not found or there are multiple balls in the scene"));
 	}
-	
+
+	bIsSetup = true;
 }
 
 // Called every frame
@@ -70,4 +74,48 @@ void AGOBPManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AGOBPManager::FindAllActions()
+{
+	Actions.Empty();
+	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	const IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+
+	TArray<FAssetData> AssetDataList;
+	FARFilter Filter;
+	//Filter.ClassPaths.Add(UGobpAction::StaticClass()->GetClassPathName());
+	Filter.bRecursiveClasses = true;
+	Filter.PackagePaths.Add("/Game/FootballContent/Actions");
+
+	//UE_LOG(LogTemp, Warning, TEXT("Using ClassPath: %s"), *UGobpAction::StaticClass()->GetClassPathName().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("Searching in path: /Game/GOBP/Actions"));
+
+	AssetRegistry.GetAssets(Filter, AssetDataList);
+
+	if (AssetDataList.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No assets found at path: /Game/FootballContent/Actions"));
+		return;
+	}
+
+	for (const auto& AssetData : AssetDataList)
+	{
+		UBlueprint* Blueprint = Cast<UBlueprint>(AssetData.GetAsset());
+		if (Blueprint && Blueprint->GeneratedClass->IsChildOf(UGobpAction::StaticClass()))
+		{
+			UGobpAction* ActionInstance = NewObject<UGobpAction>(this, Blueprint->GeneratedClass);
+			if (ActionInstance)
+			{
+				Actions.Add(ActionInstance);
+			}
+		}
+	}
+
+	for (const auto& Action : Actions)
+	{
+		Action->SetupAction();
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Found %d actions"), Actions.Num());
 }

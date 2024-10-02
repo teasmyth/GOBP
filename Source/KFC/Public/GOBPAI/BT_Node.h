@@ -31,9 +31,8 @@ public:
 
 protected:
 
-	//Technically, I am not planning to use these, as I am replacing them with Action's Start,Update and Exit functions
-	//Keeping these for the sake of traditional structure of a Behaviour Tree
-	virtual void OnStart(UPlayerStats* Player) = 0;
+	//On OnStart, for single frame actions, we can return Success or Failure
+	virtual EBT_NodeState OnStart(UPlayerStats* Player) = 0;
 	virtual void OnExit(UPlayerStats* Player) = 0;
 	virtual EBT_NodeState OnUpdate(UPlayerStats* Player) = 0;
 	

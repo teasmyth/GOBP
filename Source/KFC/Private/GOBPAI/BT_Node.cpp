@@ -14,7 +14,10 @@ EBT_NodeState BT_Node::Update(UPlayerStats* Player)
 {
 	if (!Started)
 	{
-		OnStart(Player);
+		if (const auto OutCome = OnStart(Player); OutCome != Running)
+		{
+			return OutCome;
+		}
 		Started = true;
 	}
 

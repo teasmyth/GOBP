@@ -3,7 +3,9 @@
 
 #include "Football/PlayerStats.h"
 
+#include "Football/FootballEventManager.h"
 #include "GOBPAI/GOBPManager.h"
+
 
 UPlayerStats::UPlayerStats(): PlayerID(0), MaxStamina(0), CurrentMaxStamina(0), CurrentStamina(0), Speed(0), Acceleration(0), Strength(0), Passing(0),
                               Accuracy(0),
@@ -12,23 +14,11 @@ UPlayerStats::UPlayerStats(): PlayerID(0), MaxStamina(0), CurrentMaxStamina(0), 
                               Goalkeeping(0), BallSkills(0),
                               Shooting(0), Dribbling(0),
                               Positioning(0),
-                              Vision(0)
+                              Vision(0), bHasBall(false)
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	
 }
 
-void UPlayerStats::SetHasBall(UPlayerStats* Player)
-{
-	if (Player == this)
-	{
-		bHasBall = true;
-	}
-	else
-	{
-		bHasBall = false;
-	}
-}
 
 void UPlayerStats::BeginPlay()
 {
@@ -41,7 +31,16 @@ void UPlayerStats::BeginPlay()
 	CurrentMaxStamina = MaxStamina;
 	CurrentStamina = MaxStamina;
 	DefaultSpeed = MovementComponent->MaxWalkSpeed;
+	UFootballEventManager::GetInstance()->RegisterPlayer(this);
 	OnBallOwned.AddDynamic(this, &UPlayerStats::SetHasBall);
+
+}
+
+void UPlayerStats::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	UFootballEventManager::GetInstance()->UnregisterPlayer(this);
+
 }
 
 void UPlayerStats::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -69,7 +68,7 @@ void UPlayerStats::Run(const FVector Dir)
 		return;
 	}
 
-	if (AGOBPManager::GetInstance() == nullptr)
+	if (AGOBPManager::GetGOBPManagerInstance() == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
 		return;
@@ -79,7 +78,7 @@ void UPlayerStats::Run(const FVector Dir)
 
 
 	MovementComponent->bOrientRotationToMovement = true;
-	const float AimedSpeed = DefaultSpeed + Speed * AGOBPManager::GetInstance()->GetSpeedDiffMultiplier() * AGOBPManager::GetInstance()->
+	const float AimedSpeed = DefaultSpeed + Speed * AGOBPManager::GetGOBPManagerInstance()->GetSpeedDiffMultiplier() * AGOBPManager::GetGOBPManagerInstance()->
 		GetRunModifier();
 	float ActualAcceleration = Acceleration * CurrentMaxStamina / MaxStamina / 100.0f * InternalTimer;
 	ActualAcceleration = ActualAcceleration > 1.0f ? 1.0f : ActualAcceleration;
@@ -97,7 +96,7 @@ void UPlayerStats::Sprint(const FVector Dir)
 		return;
 	}
 
-	if (AGOBPManager::GetInstance() == nullptr)
+	if (AGOBPManager::GetGOBPManagerInstance() == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
 		return;
@@ -112,7 +111,7 @@ void UPlayerStats::Sprint(const FVector Dir)
 	SetMovementMode(EPlayerMovementMode::Sprinting);
 
 	MovementComponent->bOrientRotationToMovement = true;
-	const float AimedSpeed = DefaultSpeed + Speed * (AGOBPManager::GetInstance()->GetSpeedDiffMultiplier() * (1 + AGOBPManager::GetInstance()->
+	const float AimedSpeed = DefaultSpeed + Speed * (AGOBPManager::GetGOBPManagerInstance()->GetSpeedDiffMultiplier() * (1 + AGOBPManager::GetGOBPManagerInstance()->
 		GetRunModifier()));
 	float ActualAcceleration = Acceleration * CurrentStamina / CurrentMaxStamina / 100.0f * InternalTimer;
 	ActualAcceleration = ActualAcceleration > 1.0f ? 1.0f : ActualAcceleration;
@@ -125,9 +124,14 @@ void UPlayerStats::Jockey(const FVector Dir)
 {
 }
 
+void UPlayerStats::SetControllingBall(const bool Value)
+{
+	bIsControllingBall = Value;
+}
+
 AActor* UPlayerStats::GetHomeGoal() const
 {
-	if (AGOBPManager::GetInstance() == nullptr)
+	if (AGOBPManager::GetGOBPManagerInstance() == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
 		return nullptr;
@@ -135,17 +139,17 @@ AActor* UPlayerStats::GetHomeGoal() const
 	
 	if (Team == ETeam::Home)
 	{
-		return AGOBPManager::GetInstance()->GetHomeGoal();
+		return AGOBPManager::GetGOBPManagerInstance()->GetHomeGoal();
 	}
 	else
 	{
-		return AGOBPManager::GetInstance()->GetAwayGoal();
+		return AGOBPManager::GetGOBPManagerInstance()->GetAwayGoal();
 	}
 }
 
 AActor* UPlayerStats::GetOpponentGoal() const
 {
-	if (AGOBPManager::GetInstance() == nullptr)
+	if (AGOBPManager::GetGOBPManagerInstance() == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
 		return nullptr;
@@ -153,13 +157,26 @@ AActor* UPlayerStats::GetOpponentGoal() const
 	
 	if (Team == ETeam::Away)
 	{
-		return AGOBPManager::GetInstance()->GetHomeGoal();
+		return AGOBPManager::GetGOBPManagerInstance()->GetHomeGoal();
 	}
 	else
 	{
-		return AGOBPManager::GetInstance()->GetAwayGoal();
+		return AGOBPManager::GetGOBPManagerInstance()->GetAwayGoal();
 	}
 }
+
+void UPlayerStats::SetHasBall(const UPlayerStats* Player)
+{
+	if (Player == this)
+	{
+		bHasBall = true;
+	}
+	else
+	{
+		bHasBall = false;
+	}
+}
+
 
 void UPlayerStats::SetMovementMode(const EPlayerMovementMode Mode)
 {
@@ -173,7 +190,7 @@ void UPlayerStats::SetMovementMode(const EPlayerMovementMode Mode)
 	case EPlayerMovementMode::Running:
 		break;
 	case EPlayerMovementMode::Sprinting:
-		CurrentMaxStamina = (CurrentMaxStamina - CurrentStamina) * AGOBPManager::GetInstance()->GetStaminaLossRatioPerUsedStamina();;
+		CurrentMaxStamina = (CurrentMaxStamina - CurrentStamina) * AGOBPManager::GetGOBPManagerInstance()->GetStaminaLossRatioPerUsedStamina();;
 		break;
 	case EPlayerMovementMode::Jockeying:
 		break;

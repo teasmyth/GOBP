@@ -33,52 +33,9 @@ bool BT_RootNode::RunTree(UPlayerStats* Player)
 	return true;
 }
 
-/*
-void BT_RootNode::GetAllNodes(BT_Node* Parent, TArray<BT_Node*>& ChildrenToReturn)
+EBT_NodeState BT_RootNode::OnStart(UPlayerStats* Player)
 {
-	if (const auto SequencerNode = dynamic_cast<BT_SequencerNode*>(Parent); SequencerNode != nullptr)
-	{
-		const auto Children = SequencerNode->GetChildren();
-		for (const auto& Child : Children)
-		{
-			ChildrenToReturn.Add(Child);
-			GetAllNodes(Child, ChildrenToReturn);
-		}
-	}
-	
-}
-
-
-void BT_RootNode::TraverseSetOwner(AActor* InActor)
-{
-	Owner = InActor;
-
-	TArray<BT_Node*> Children;
-	Children.Add(Child);
-	GetAllNodes(Child, Children);
-	for (const auto& ChildNode : Children)
-	{
-		ChildNode->Owner = InActor;
-	}
-}
-
-void BT_RootNode::CalculateCosts() const
-{
-	TArray<BT_Node*> Children;
-	Children.Add(Child);
-	GetAllNodes(Child, Children);
-	for (const auto& ChildNode : Children)
-	{
-		if (ChildNode->Action != nullptr)
-		{
-			ChildNode->Action->CalculateCost();
-		}
-	}
-}
-*/
-
-void BT_RootNode::OnStart(UPlayerStats* Player)
-{
+	return Running;
 }
 
 void BT_RootNode::OnExit(UPlayerStats* Player)

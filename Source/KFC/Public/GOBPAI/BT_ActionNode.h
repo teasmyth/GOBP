@@ -22,7 +22,7 @@ public:
 
 
 protected:
-	virtual void OnStart(UPlayerStats* Player) override;
+	virtual EBT_NodeState OnStart(UPlayerStats* Player) override;
 	virtual void OnExit(UPlayerStats* Player) override;
 	virtual EBT_NodeState OnUpdate(UPlayerStats* Player) override;
 };
