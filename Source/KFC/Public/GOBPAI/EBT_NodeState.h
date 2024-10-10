@@ -12,6 +12,7 @@ enum EBT_NodeState: uint8
 {
 	Running = 0,
 	Success = 1,
-	Failure = 2
+	Failure = 2,
+	Skip = 3
 };
 

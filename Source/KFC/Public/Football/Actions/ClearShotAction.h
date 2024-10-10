@@ -17,6 +17,7 @@ class KFC_API UClearShotAction : public UGobpAction
 	UClearShotAction();
 
 	virtual EBT_NodeState StartAction(UPlayerStats* Player) override;
+	
 
 private:
 

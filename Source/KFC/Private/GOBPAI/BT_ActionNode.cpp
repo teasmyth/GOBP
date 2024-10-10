@@ -17,12 +17,12 @@ EBT_NodeState BT_ActionNode::OnStart(UPlayerStats* Player)
 	if (Action != nullptr)
 	{
 		const auto o = Action->StartAction(Player);
-		//return Action->StartAction(Player);
+		//return Chain->StartAction(Player);
 
 		return o;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
+	UE_LOG(LogTemp, Warning, TEXT("Chain is nullptr at %s"), *NodeName);
 	return Failure;
 }
 
@@ -34,7 +34,7 @@ void BT_ActionNode::OnExit(UPlayerStats* Player)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
+		UE_LOG(LogTemp, Warning, TEXT("Chain is nullptr at %s"), *NodeName);
 	}
 }
 
@@ -46,7 +46,7 @@ EBT_NodeState BT_ActionNode::OnUpdate(UPlayerStats* Player)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
+		UE_LOG(LogTemp, Warning, TEXT("Chain is nullptr at %s"), *NodeName);
 		State = Failure;
 	}
 	return State;

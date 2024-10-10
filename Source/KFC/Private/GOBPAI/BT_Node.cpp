@@ -6,12 +6,19 @@ class BT_SequencerNode;
 
 BT_Node::BT_Node()
 {
-	
 }
 
 
 EBT_NodeState BT_Node::Update(UPlayerStats* Player)
 {
+	if (State == Skip)
+	{
+		Started = false;
+		OnUpdate(Player); //This way the children will be updated without executing the action of this node.
+
+		return Skip;
+	}
+
 	if (!Started)
 	{
 		if (const auto OutCome = OnStart(Player); OutCome != Running)
@@ -21,7 +28,7 @@ EBT_NodeState BT_Node::Update(UPlayerStats* Player)
 		Started = true;
 	}
 
-	
+
 	if (Action != nullptr)
 	{
 		if (Action->ActionType == EActionType::Null)
@@ -36,8 +43,8 @@ EBT_NodeState BT_Node::Update(UPlayerStats* Player)
 	}
 
 	State = OnUpdate(Player);
-	
-	if (State != Running)
+
+	if (State == Success || State == Failure)
 	{
 		OnExit(Player);
 		Started = false;
@@ -51,4 +58,3 @@ void BT_Node::ResetNode()
 	Started = false;
 	State = Running;
 }
-

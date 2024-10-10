@@ -7,14 +7,9 @@
 #include "GOBPAI/GOBPManager.h"
 
 
-UPlayerStats::UPlayerStats(): PlayerID(0), MaxStamina(0), CurrentMaxStamina(0), CurrentStamina(0), Speed(0), Acceleration(0), Strength(0), Passing(0),
-                              Accuracy(0),
-                              Defense(0),
-                              Tackling(0),
-                              Goalkeeping(0), BallSkills(0),
-                              Shooting(0), Dribbling(0),
-                              Positioning(0),
-                              Vision(0), bHasBall(false)
+UPlayerStats::UPlayerStats(): bHasBall(false), PlayerID(0), MaxStamina(0), CurrentMaxStamina(0), CurrentStamina(0), Speed(0), Acceleration(0),
+                              Strength(0), Passing(0), Accuracy(0), Defense(0), Tackling(0), Goalkeeping(0), BallSkills(0), Shooting(0), Dribbling(0),
+                              Positioning(0), Vision(0)
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
@@ -33,20 +28,18 @@ void UPlayerStats::BeginPlay()
 	DefaultSpeed = MovementComponent->MaxWalkSpeed;
 	UFootballEventManager::GetInstance()->RegisterPlayer(this);
 	OnBallOwned.AddDynamic(this, &UPlayerStats::SetHasBall);
-
 }
 
 void UPlayerStats::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 	UFootballEventManager::GetInstance()->UnregisterPlayer(this);
-
 }
 
 void UPlayerStats::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
+
 	InternalTimer += DeltaTime;
 
 	if (MovementMode == EPlayerMovementMode::Sprinting)
@@ -78,7 +71,8 @@ void UPlayerStats::Run(const FVector Dir)
 
 
 	MovementComponent->bOrientRotationToMovement = true;
-	const float AimedSpeed = DefaultSpeed + Speed * AGOBPManager::GetGOBPManagerInstance()->GetSpeedDiffMultiplier() * AGOBPManager::GetGOBPManagerInstance()->
+	const float AimedSpeed = DefaultSpeed + Speed * AGOBPManager::GetGOBPManagerInstance()->GetSpeedDiffMultiplier() *
+		AGOBPManager::GetGOBPManagerInstance()->
 		GetRunModifier();
 	float ActualAcceleration = Acceleration * CurrentMaxStamina / MaxStamina / 100.0f * InternalTimer;
 	ActualAcceleration = ActualAcceleration > 1.0f ? 1.0f : ActualAcceleration;
@@ -111,11 +105,12 @@ void UPlayerStats::Sprint(const FVector Dir)
 	SetMovementMode(EPlayerMovementMode::Sprinting);
 
 	MovementComponent->bOrientRotationToMovement = true;
-	const float AimedSpeed = DefaultSpeed + Speed * (AGOBPManager::GetGOBPManagerInstance()->GetSpeedDiffMultiplier() * (1 + AGOBPManager::GetGOBPManagerInstance()->
+	const float AimedSpeed = DefaultSpeed + Speed * (AGOBPManager::GetGOBPManagerInstance()->GetSpeedDiffMultiplier() * (1 +
+		AGOBPManager::GetGOBPManagerInstance()->
 		GetRunModifier()));
 	float ActualAcceleration = Acceleration * CurrentStamina / CurrentMaxStamina / 100.0f * InternalTimer;
 	ActualAcceleration = ActualAcceleration > 1.0f ? 1.0f : ActualAcceleration;
-	
+
 	MovementComponent->MaxWalkSpeed = AimedSpeed * ActualAcceleration;
 	MovementComponent->AddInputVector(Dir);
 }
@@ -136,7 +131,7 @@ AActor* UPlayerStats::GetHomeGoal() const
 		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
 		return nullptr;
 	}
-	
+
 	if (Team == ETeam::Home)
 	{
 		return AGOBPManager::GetGOBPManagerInstance()->GetHomeGoal();
@@ -154,7 +149,7 @@ AActor* UPlayerStats::GetOpponentGoal() const
 		UE_LOG(LogTemp, Error, TEXT("GOBPManager is null"));
 		return nullptr;
 	}
-	
+
 	if (Team == ETeam::Away)
 	{
 		return AGOBPManager::GetGOBPManagerInstance()->GetHomeGoal();
@@ -203,23 +198,23 @@ void UPlayerStats::SetMovementMode(const EPlayerMovementMode Mode)
 
 	switch (Mode)
 	{
-		case EPlayerMovementMode::Running:
-			if (MovementMode != EPlayerMovementMode::Sprinting)
-			{
-				InternalTimer = 0.0f;
-			}
-			break;
-		case EPlayerMovementMode::Sprinting:
-			if (MovementMode != EPlayerMovementMode::Running)
-			{
-				InternalTimer = 0.0f;
-			}
-			break;
-		case EPlayerMovementMode::Jockeying:
+	case EPlayerMovementMode::Running:
+		if (MovementMode != EPlayerMovementMode::Sprinting)
+		{
 			InternalTimer = 0.0f;
-			break;
-		case EPlayerMovementMode::Walking:
-			break;
+		}
+		break;
+	case EPlayerMovementMode::Sprinting:
+		if (MovementMode != EPlayerMovementMode::Running)
+		{
+			InternalTimer = 0.0f;
+		}
+		break;
+	case EPlayerMovementMode::Jockeying:
+		InternalTimer = 0.0f;
+		break;
+	case EPlayerMovementMode::Walking:
+		break;
 	default: break;
 	}
 

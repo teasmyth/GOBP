@@ -28,6 +28,11 @@ enum class EConditions : uint8
 	Pressure = 13 UMETA(DisplayName = "Pressure"),
 	BallAction = 14 UMETA(DisplayName = "Ball Action"),
 	NoBall = 15 UMETA(DisplayName = "No Ball"),
+	ObstructedDribble = 16 UMETA(DisplayName = "Obstructed Dribble"),
+	CanOvercomeOpponent = 17 UMETA(DisplayName = "Can Overcome Opponent"),
+	OvercomeOpponentSuccess = 18 UMETA(DisplayName = "Overcome Opponent Success"),
+	OvercomeOpponentFailed = 19 UMETA(DisplayName = "Overcome Opponent Failed"),
+	Dribble = 20 UMETA(DisplayName = "Dribble"),
 };
 
 FORCEINLINE uint32 GetTypeHash(const EConditions& Condition)

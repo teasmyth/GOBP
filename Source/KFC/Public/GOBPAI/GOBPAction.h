@@ -14,9 +14,10 @@ UENUM(BlueprintType)
 enum class EActionType : uint8
 {
 	Null = 0 UMETA(DisplayName = "Null", ToolTip = "Null action, used for initialization."),
-	Action = 1 UMETA(DisplayName = "Action", ToolTip = "Action to be taken by the player."),
-	Selector = 2 UMETA(DisplayName = "Selector", ToolTip = "Selector node to determine the next action. It will run every successful child"),
-	Picker = 3 UMETA(DisplayName = "Picker", ToolTip = "Picker node to determine the next action. It will run only first child that meets conditions."),
+	Action = 1 UMETA(DisplayName = "Simple Action", ToolTip = "This action is meant to be one-time executed action. It does not have any children and uses Start Function only."),
+	Chain = 2 UMETA(DisplayName = "Simple Chain Action", ToolTip = "This action executes all their children without extra condition check. Fails if all children fail."),
+	Selector = 3 UMETA(DisplayName = "Selector Action", ToolTip = "This action will try running their children without extra condition check, as long as they do not fail."),
+	Picker = 4 UMETA(DisplayName = "Picker Action", ToolTip = "This action will pick which child to run next based on its PickNext condition check function, first matching child is picked."),
 	Decorator
 };
 
@@ -66,13 +67,15 @@ public:
 	bool IsAchievableGivenConditionsBP(const TArray<EConditions>& InConditions);
 	//The purpose of this function is to evaluate whether this action can be executed given the previous action's outcome in the planning phase.
 	virtual bool IsAchievableGivenConditions(const TArray<EConditions>& InConditions);
+	
 
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")
 	EBT_NodeState StartActionBP(UPlayerStats* Player);
 	virtual EBT_NodeState StartAction(UPlayerStats* Player);
 
-	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")
+	//IMPORTANT NOTE: due to BT structure, this function will only be called after all the children already executed their codes. So, unless it is a final action that leads to the goal, it is pointless to use.
+	UFUNCTION(BlueprintNativeEvent, Category = "GOBP", meta = (DisplayName = "End Action", Tooltip = "This runs after Start action. It is used to determine the next action to be taken."))
 	EBT_NodeState EndActionBP(UPlayerStats* Player);
 	virtual EBT_NodeState EndAction(UPlayerStats* Player);
 	
@@ -106,9 +109,9 @@ private:
 
 
 protected:
-	UFUNCTION(BlueprintCallable, Category = "GOBP Action")
+	UFUNCTION(BlueprintCallable, Category = "GOBP Chain")
 	bool IsStraightLineClear(UPlayerStats* Player, const AActor* Target) const;
 
-	UFUNCTION(BlueprintCallable, Category = "GOBP Action")
+	UFUNCTION(BlueprintCallable, Category = "GOBP Chain")
 	float RandomAccuracyMultiplier(const UPlayerStats* Player) const;
 };

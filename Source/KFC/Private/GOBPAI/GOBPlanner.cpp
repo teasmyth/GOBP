@@ -48,10 +48,6 @@ bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Pri
 	for (const auto GoalAction : GoalActions)
 	{
 		//We pass in an empty node, whose conditions will be satisfied by the first 'final' action. E.g. Shoot, Pass, etc.
-		if (GoalAction.Action->Name == "Clear Shot Action")
-		{
-			int32 a = 0;
-		}
 		TSharedPtr<Node> GoalNode = MakeShareable(new Node(nullptr, GoalAction.Action->GetCost(Player), GoalAction.Goals, nullptr));
 
 		if (TSharedPtr<Node> StartNode = nullptr; FindPath(Player, GoalNode, UsedActions, StartNode))
@@ -136,14 +132,14 @@ bool GOBPlanner::FindPath(UPlayerStats* Player, const TSharedPtr<Node>& Child, T
 		//Yet if we bypass by carrying over unsatisfied conditions, then this opens up the floodgates for all sorts of issues, such as picking pass.
 		//Tried limiting this bypass by at least matching one condition, however, this previous logic will always be present when it comes to evaluating very generic conditions such as HasBall,
 		//sooner or later this issue will reproduce itself. Thus, I have made the decision to limit the planning to linear conditioning, rather than overarching conditions.
-		//if (!Action->CanBeDoneBeforeNewAction(Child->ConditionStates, UnsatisfiedConditions)) continue;
+		//if (!Chain->CanBeDoneBeforeNewAction(Child->ConditionStates, UnsatisfiedConditions)) continue;
 		if (!Action->CanBeDoneBeforeNewAction(Child->ConditionStates)) continue;
 
 
 		/*
 		 *Could help with global conditions to carry over.
 		TMap<FString, int32> CurrentState = Child->Conditions;
-		for (const auto& Effect : Action->PreConditions)
+		for (const auto& Effect : Chain->PreConditions)
 		{
 			if (CurrentState.Contains(Effect.Key))
 			{
@@ -163,7 +159,7 @@ bool GOBPlanner::FindPath(UPlayerStats* Player, const TSharedPtr<Node>& Child, T
 		NewNode->Leaves.Add(Child);
 
 		/*
-		if (Action->IsAchievableGivenConditions(FWorldStates::TranslateMapToTArray(GOBPWorld::Instance->GetWorld().GetStates())))
+		if (Chain->IsAchievableGivenConditions(FWorldStates::TranslateMapToTArray(GOBPWorld::Instance->GetWorld().GetStates())))
 		{
 			FoundPath = true;
 		}
@@ -218,7 +214,7 @@ void GOBPlanner::PopulateUnrealBT(const TSharedPtr<Node>& Node, UBTCompositeNode
 		{
 			UBTComposite_Selector* Selector = NewObject<UBTComposite_Selector>(Tree, UBTComposite_Selector::StaticClass());
 			Selector->NodeName = Leaf->Action->Name;
-			//Leaf->Action->ActionType
+			//Leaf->Chain->ActionType
 			FBTCompositeChild ChildSelector;
 			ChildSelector.ChildComposite = Selector;
 			ParentNode->Children.Add(ChildSelector);
@@ -250,15 +246,25 @@ void GOBPlanner::PopulateBT(const TSharedPtr<BT_SequencerNode>& InBT_Node, const
 	{
 		for (const auto& Child : InPathFindNode->Leaves)
 		{
+			/*
 			if (Child->Leaves.IsEmpty())
 			{
-				const TSharedPtr<BT_ActionNode> NewActionNode = MakeShareable(new BT_ActionNode(Child->Action));
+				const TSharedPtr<BT_ActionNode> NewActionNode = MakeShareable(new BT_ActionNode(Child->Action)); //Do I even need action nodes? Why not just use sequencer nodes?
 				InBT_Node->AddChild(NewActionNode);
+				
 			}
 			else
 			{
 				const TSharedPtr<BT_SequencerNode> NewSequencerNode = MakeShareable(new BT_SequencerNode(Child->Action));
 				InBT_Node->AddChild(NewSequencerNode);
+				PopulateBT(NewSequencerNode, Child);
+			}
+			*/
+			const TSharedPtr<BT_SequencerNode> NewSequencerNode = MakeShareable(new BT_SequencerNode(Child->Action));
+			InBT_Node->AddChild(NewSequencerNode);
+			
+			if (!Child->Leaves.IsEmpty())
+			{
 				PopulateBT(NewSequencerNode, Child);
 			}
 		}

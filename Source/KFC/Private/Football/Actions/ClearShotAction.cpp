@@ -1,18 +1,18 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Football/ClearShotAction.h"
+#include "Football/Actions/ClearShotAction.h"
 #include "Football/FootballBall.h"
 #include "GOBPAI/GOBPManager.h"
 
 UClearShotAction::UClearShotAction()
 {
-	ActionType = EActionType::Action;
+	ActionType = EActionType::Chain;
 
 	PreConditions = { EConditions::ClearShot };
 	AfterEffects = { EConditions::Shoot };
 
-	Name = "Clear Shot Action";
+	Name = "Clear Shot Chain";
 }
 
 EBT_NodeState UClearShotAction::StartAction(UPlayerStats* Player)

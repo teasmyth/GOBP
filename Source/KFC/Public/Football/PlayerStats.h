@@ -93,6 +93,18 @@ public:
 	}
 
 	UFUNCTION(BlueprintPure)
+	FVector GetTargetDirection() const
+	{
+		return TargetDirection;
+	}
+
+	UFUNCTION(BlueprintPure)
+	UPlayerStats* GetTargetPlayer() const
+	{
+		return TargetPlayer;
+	}
+
+	UFUNCTION(BlueprintPure)
 	int32 GetMaxStamina() const
 	{
 		return MaxStamina;
@@ -188,8 +200,25 @@ public:
 		return Vision;
 	}
 
+	float GetVelocity() const
+	{
+		return FVector(MovementComponent->Velocity.X, MovementComponent->Velocity.Y, 0).Size(); //Probably Z will be 0 but just in case.
+	}
+
 #pragma endregion 
 
+	UFUNCTION(BlueprintCallable)
+	void SetTargetDirection(const FVector Direction)
+	{
+		TargetDirection = Direction;
+	}
+
+	UFUNCTION(BlueprintCallable)
+	void SetTargetPlayer(UPlayerStats* Player)
+	{
+		TargetPlayer = Player;
+	}
+	
 	UFUNCTION(BlueprintCallable)
 	void AddStamina(const int32 Stamina)
 	{
@@ -235,55 +264,70 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
+	//"Blackboard" variables
+
+	UPROPERTY(VisibleAnywhere, Category = "Player Stats | Blackboard")
+	FVector TargetDirection;
+	UPROPERTY(VisibleAnywhere, Category = "Player Stats | Blackboard")
+	UPlayerStats* TargetPlayer = nullptr;
+	UPROPERTY(VisibleAnywhere, Category = "Player Stats | Blackboard")
+	bool bHasBall;
+	UPROPERTY(VisibleAnywhere, Category = "Player Stats | Blackboard")
+	bool bIsControllingBall = false;
+
+	//Player stats
+	
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	int32 PlayerID;
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	ETeam Team = ETeam::Home;
 
+	//UPROPERTY(EditAnywhere, Category = "Player Stats")
+	//EPosition Position; TODO: Implement this
 
 	//Movement
-	UPROPERTY(EditAnywhere, Category = "Player Stats/Movement")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Movement")
 	int32 MaxStamina;
-	UPROPERTY(VisibleAnywhere, Category = "Player Stats/Movement")
+	UPROPERTY(VisibleAnywhere, Category = "Player Stats | Movement")
 	float CurrentMaxStamina;
-	UPROPERTY(VisibleAnywhere, Category = "Player Stats/Movement")
+	UPROPERTY(VisibleAnywhere, Category = "Player Stats | Movement")
 	float CurrentStamina;
-	UPROPERTY(EditAnywhere, Category = "Player Stats/Movement")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Movement")
 	int32 Speed;
-	UPROPERTY(EditAnywhere, Category = "Player Stats/Movement")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Movement")
 	int32 Acceleration;
-	UPROPERTY(EditAnywhere, Category = "Player Stats/Movement")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Movement")
 	int32 Strength;
 
 
 	//Ball mechanics
-	UPROPERTY(EditAnywhere, Category = "Player Stats/Ball Mechanics")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Ball Mechanics")
 	int32 Passing;
-	UPROPERTY(EditAnywhere, Category = "Player Stats/Ball Mechanics")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Ball Mechanics")
 	int32 Accuracy;
 
 
 	//Defense
-	UPROPERTY(EditAnywhere, Category = "Player Stats/Defense")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Defense")
 	int32 Defense;
-	UPROPERTY(EditAnywhere, Category = "Player Stats/Defense")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Defense")
 	int32 Tackling;
-	UPROPERTY(EditAnywhere, Category = "Player Stats/Defense")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Defense")
 	int32 Goalkeeping;
 
 	//Attacking
-	UPROPERTY(EditAnywhere, Category = "Player Stats/Attacking")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Attacking")
 	int32 BallSkills;
-	UPROPERTY(EditAnywhere, Category = "Player Stats/Attacking")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Attacking")
 	int32 Shooting;
 
 	//General
-	UPROPERTY(EditAnywhere, Category = "Player Stats/General")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Miscellaneous")
 	int32 Dribbling;
-	UPROPERTY(EditAnywhere, Category = "Player Stats/General")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Miscellaneous")
 	int32 Positioning;
-	UPROPERTY(EditAnywhere, Category = "Player Stats/General")
+	UPROPERTY(EditAnywhere, Category = "Player Stats | Miscellaneous")
 	int32 Vision;
 
 
@@ -299,7 +343,7 @@ private:
 	{
 		return bIsControllingBall;
 	}
-	bool bIsControllingBall = false;
+	
 
 	//Important for normalizing the movement across all agents, so the speed stats are relative to each other.
 	float DefaultSpeed = 0.0f;
@@ -317,7 +361,7 @@ private:
 	
 	UFUNCTION()
 	void SetHasBall(const UPlayerStats* Player);
-	bool bHasBall;
+	
 
 
 	void SetMovementMode(const EPlayerMovementMode Mode);

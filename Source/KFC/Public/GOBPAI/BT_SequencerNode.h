@@ -36,14 +36,12 @@ protected:
 
 private:
 	TArray<TSharedPtr<BT_Node>> Children;
-	TArray<EConditions> SelectedOutcome;
-	bool SelectorFnEmpty = false;
 	/*
 static bool CompareNodeCost(const BT_Node& A, const BT_Node& B)
 {
-	if (A.Action == nullptr) return false;
-	if (B.Action == nullptr) return true;
-	return A.Action->Cost < B.Action->Cost;
+	if (A.Chain == nullptr) return false;
+	if (B.Chain == nullptr) return true;
+	return A.Chain->Cost < B.Chain->Cost;
 }
 */
 };

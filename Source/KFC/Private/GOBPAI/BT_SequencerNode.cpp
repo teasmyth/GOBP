@@ -17,16 +17,22 @@ EBT_NodeState BT_SequencerNode::OnStart(UPlayerStats* Player)
 {
 	if (Action != nullptr)
 	{
-		if (const auto Outcome = Action->StartAction(Player); Outcome != Running)
+		const auto Outcome = Action->StartAction(Player);
+		if ( Outcome != Running)
 		{
 			return Outcome;
 		}
-		SelectedOutcome = Action->PickNextAction(Player);
-		SelectorFnEmpty = SelectedOutcome.IsEmpty();
+
+		if (Action->ActionType == EActionType::Action && Outcome == Running)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Action node %s is not supposed to be running. Failing action."), *NodeName);
+			return Failure;
+		}
+		
 		return Running;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
+	UE_LOG(LogTemp, Warning, TEXT("Chain is nullptr at %s"), *NodeName);
 	return Failure;
 }
 
@@ -38,7 +44,7 @@ void BT_SequencerNode::OnExit(UPlayerStats* Player)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
+		UE_LOG(LogTemp, Warning, TEXT("Chain is nullptr at %s"), *NodeName);
 	}
 }
 
@@ -46,62 +52,28 @@ EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 {
 	if (Action == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
+		UE_LOG(LogTemp, Warning, TEXT("Chain is nullptr at %s"), *NodeName);
 		return Failure;
 	}
 
 
-	SelectedOutcome = Action->PickNextAction(Player);
-
-	if (Children.Num() == 0 || SelectedOutcome.IsEmpty())
+	if (Children.Num() == 0 && Action->ActionType != EActionType::Action)
 	{
-		if (SelectedOutcome.IsEmpty())
-		{
-			if (Action != nullptr)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Selector Function is empty for Action: %s"), *Action->GetName());
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Selector Function is empty"));
-			}
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Children are empty"));
-		}
+		UE_LOG(LogTemp, Warning, TEXT("Children are empty at %s. It must have children."), *NodeName);
 		return Failure;
 	}
 
-
-	/* needs more work, need to think it through.
-	if (Action->ActionType == EActionType::Selector)
-	{
-		bool IsRunning = false;
-		for (const auto& Child : Children)
-		{
-			switch (Child->Update(Player))
-			{
-			case Success:
-				return Success;
-			case Running:
-				IsRunning = true;
-				break;
-			default: break;
-			}
-		}
-		if (IsRunning)
-		{
-			Action->ExecuteAction(Player);
-			return Running;
-		}
-		return Failure;
-		
-	}
-	*/
-
+	//To pick next action, we need to check the outcome before executing the action of this action node.
 	if (Action->ActionType == EActionType::Picker)
 	{
+		const auto SelectedOutcome = Action->PickNextAction(Player);
+
+		if (SelectedOutcome.IsEmpty())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("No action was selected for %s"), *NodeName);
+			return Action->ExecuteAction(Player);
+		}
+
 		for (const auto& Child : Children)
 		{
 			if (Child->Action == nullptr) continue;
@@ -111,9 +83,71 @@ EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 				return Child->Update(Player);
 			}
 		}
-
-		Action->ExecuteAction(Player);
 	}
+
+
+	if (const auto Outcome = Action->ExecuteAction(Player); Outcome == Failure)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Action %s failed."), *NodeName);
+		return Failure;
+	}
+
+	if (Action->ActionType == EActionType::Chain)
+	{
+		int SuccessChild = 0;
+		int FailureChild = 0;
+		for (const auto& Child : Children)
+		{
+			if (Child->Action == nullptr) continue;
+
+			if (const auto ChildOutcome = Child->Update(Player); ChildOutcome == Failure)
+			{
+				FailureChild++;
+			}
+			else if (ChildOutcome == Success)
+			{
+				SuccessChild++;
+			}
+		}
+
+		if (SuccessChild == Children.Num())
+		{
+			return Success;
+		}
+		else if (FailureChild == Children.Num())
+		{
+			return Failure;
+		}
+
+		return Running;
+	}
+
+
+	if (Action->ActionType == EActionType::Selector)
+	{
+		int SuccessChild = 0;
+		for (const auto& Child : Children)
+		{
+			if (Child->Action == nullptr) continue;
+
+			if (const auto ChildOutcome = Child->Update(Player); ChildOutcome == Failure)
+			{
+				return Failure;
+			}
+			else if (ChildOutcome == Success)
+			{
+				SuccessChild++;
+			}
+		}
+
+		if (SuccessChild == Children.Num())
+		{
+			return Success;
+		}
+	}
+
+
+	
 
 	//UE_LOG(LogTemp, Warning, TEXT("No action was selected for %s or all actions failed."), *NodeName);
 	return Running;
