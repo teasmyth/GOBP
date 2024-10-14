@@ -2,7 +2,6 @@
 
 #include "KFC/Public/GOBPAI/BT_Node.h"
 
-class BT_SequencerNode;
 
 BT_Node::BT_Node()
 {
@@ -11,12 +10,20 @@ BT_Node::BT_Node()
 
 EBT_NodeState BT_Node::Update(UPlayerStats* Player)
 {
-	if (State == Skip)
+	if (Action != nullptr || bIsRootNode)
 	{
-		Started = false;
-		OnUpdate(Player); //This way the children will be updated without executing the action of this node.
-
-		return Skip;
+		if (!bIsRootNode && Action->ActionType == EActionType::Null)
+		{
+			if (!bIsRootNode) UE_LOG(LogTemp, Warning, TEXT("Action Type is Null at %s"), *NodeName);
+			return Failure;
+		}
+		Player->SetCurrentActionName(NodeName);
+	}
+	else
+	{
+		if (!bIsRootNode) UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
+		Player->SetCurrentActionName("Null");
+		return Failure;
 	}
 
 	if (!Started)
@@ -28,23 +35,9 @@ EBT_NodeState BT_Node::Update(UPlayerStats* Player)
 		Started = true;
 	}
 
-
-	if (Action != nullptr)
-	{
-		if (Action->ActionType == EActionType::Null)
-		{
-			if (!bIsRootNode) UE_LOG(LogTemp, Warning, TEXT("Action Type is Null at %s"), *NodeName);
-			return Failure;
-		}
-	}
-	else
-	{
-		if (!bIsRootNode) UE_LOG(LogTemp, Warning, TEXT("Action is nullptr at %s"), *NodeName);
-	}
-
 	State = OnUpdate(Player);
 
-	if (State == Success || State == Failure)
+	if (State != Running)
 	{
 		OnExit(Player);
 		Started = false;

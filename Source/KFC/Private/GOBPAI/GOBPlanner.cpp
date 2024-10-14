@@ -56,8 +56,6 @@ bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Pri
 			StartNodes.Add(StartNode);
 		}
 		UsedActions.Remove(GoalAction.Action); //We remove this regardless of success or failure, as it is not needed anymore.
-
-		//UE_LOG(LogTemp, Warning, TEXT("Goal Node Cost: %d"), GoalNode->Cost);
 	}
 
 	if (StartNodes.Num() == 0)
@@ -82,6 +80,9 @@ bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Pri
 		if (Priority == EPriority::PrioritizeCost)
 		{
 			PrioritizeCost(MainPlan);
+			/*TODO When prioritizing goal, it should be by default that the leaves organizes themselves according to cost
+			 *without messing up the goal order.
+			*/
 		}
 	}
 
@@ -132,39 +133,24 @@ bool GOBPlanner::FindPath(UPlayerStats* Player, const TSharedPtr<Node>& Child, T
 		//Yet if we bypass by carrying over unsatisfied conditions, then this opens up the floodgates for all sorts of issues, such as picking pass.
 		//Tried limiting this bypass by at least matching one condition, however, this previous logic will always be present when it comes to evaluating very generic conditions such as HasBall,
 		//sooner or later this issue will reproduce itself. Thus, I have made the decision to limit the planning to linear conditioning, rather than overarching conditions.
-		//if (!Chain->CanBeDoneBeforeNewAction(Child->ConditionStates, UnsatisfiedConditions)) continue;
+
+		//update 10/10 - it's been two weeks since my initial comment and I am yet to come up with a meaningful example where I would want to produce two conditions in a single outcome.
+		//Perhaps removing arrays for outcomes and just producing singular outcomes is the approach. Also, I decided to double down on a design choice,
+		//where each action's precondition is a single element. Having HasBall and ClearShot is meanigless as by that time I should have the ball anyway,
+		//so this would just lead to unnecessary, self-implied if checks. Therefore, it is not an "issue" any more. I will remove all of these comments once I made the
+		//necessary changes.
+
+		
 		if (!Action->CanBeDoneBeforeNewAction(Child->ConditionStates)) continue;
 
-
-		/*
-		 *Could help with global conditions to carry over.
-		TMap<FString, int32> CurrentState = Child->Conditions;
-		for (const auto& Effect : Chain->PreConditions)
-		{
-			if (CurrentState.Contains(Effect.Key))
-			{
-				CurrentState[Effect.Key] += Effect.Value;
-			}
-			else
-			{
-				CurrentState.Add(Effect.Key, Effect.Value);
-			}
-		}
-		*/
-
-
+		
 		const TSharedPtr<Node> NewNode = MakeShareable(
 			new Node(nullptr, Child->Cost + Action->GetCost(Player), Action->PreConditions.Array(), Action));
 		Child->Parent = NewNode;
 		NewNode->Leaves.Add(Child);
 
-		/*
-		if (Chain->IsAchievableGivenConditions(FWorldStates::TranslateMapToTArray(GOBPWorld::Instance->GetWorld().GetStates())))
-		{
-			FoundPath = true;
-		}
-		*/
-		if (Action->PreConditions.IsEmpty()) // for the time being im not checking for anything
+		
+		if (Action->PreConditions.IsEmpty()) // This should have an OR check, that is, either no preconditions or our current state satisfies that preconditions. For exampple we already have the ball.
 		{
 			EndNode = NewNode;
 			return true;
@@ -246,10 +232,10 @@ void GOBPlanner::PopulateBT(const TSharedPtr<BT_SequencerNode>& InBT_Node, const
 	{
 		for (const auto& Child : InPathFindNode->Leaves)
 		{
-			/*
+			/* Keeping this 'legacy' code in case I want to use specific nodes again, instead of sequencers only.
 			if (Child->Leaves.IsEmpty())
 			{
-				const TSharedPtr<BT_ActionNode> NewActionNode = MakeShareable(new BT_ActionNode(Child->Action)); //Do I even need action nodes? Why not just use sequencer nodes?
+				const TSharedPtr<BT_ActionNode> NewActionNode = MakeShareable(new BT_ActionNode(Child->Action));
 				InBT_Node->AddChild(NewActionNode);
 				
 			}
@@ -282,30 +268,4 @@ void GOBPlanner::PrioritizeCost(const TSharedPtr<Node>& Parent)
 	{
 		PrioritizeCost(Leaf);
 	}
-}
-
-
-bool GOBPlanner::GoalAchieved(const TMap<FString, int32>& Goals, const TMap<FString, int32>& States)
-{
-	for (auto Goal : Goals)
-	{
-		if (!States.Contains(Goal.Key)) //|| States[Goal.Key] != Goal.Value)
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
-TArray<UGobpAction*> GOBPlanner::ActionSubset(TArray<UGobpAction*> NewSubset, const UGobpAction* ActionToRemove)
-{
-	TArray<UGobpAction*> Subset = TArray<UGobpAction*>();
-	for (const auto& Action : NewSubset)
-	{
-		if (Action != ActionToRemove)
-		{
-			Subset.Add(Action);
-		}
-	}
-	return Subset;
 }

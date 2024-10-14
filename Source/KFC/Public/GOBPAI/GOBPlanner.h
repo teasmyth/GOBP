@@ -44,9 +44,6 @@ public:
 	GOBPlanner();
 	~GOBPlanner();
 
-	static bool GoalAchieved(const TMap<FString, int32>& Goals, const TMap<FString, int32>& States);
-	static TArray<UGobpAction*> ActionSubset(TArray<UGobpAction*> NewSubset, const UGobpAction* ActionToRemove);
-
 	//Passing in an empty node with the desired goal, and from there it works its way back to the start
 	//StartNode is the start from the plan, the first action to execute
 	static bool FindPath(UPlayerStats* Player, const TSharedPtr<Node>& Child, TArray<UGobpAction*> UsableActions, TSharedPtr<Node>& EndNode);

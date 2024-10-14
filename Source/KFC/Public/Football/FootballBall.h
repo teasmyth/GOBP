@@ -29,7 +29,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 
-	UFUNCTION(BlueprintCallable, Category = "Ball")
+	UFUNCTION(BlueprintCallable, Category = "Ball") //TODO rename this function to BroadcastBallOwned or something, confusing with UPlayerStats::SetHasBall
 	void SetHasBall(const UPlayerStats* Player);
 
 	UFUNCTION(BlueprintCallable)

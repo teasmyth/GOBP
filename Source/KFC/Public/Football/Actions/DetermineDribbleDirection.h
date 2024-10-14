@@ -23,5 +23,6 @@ class KFC_API UDetermineDribbleDirection : public UGobpAction
 	}
 	virtual EBT_NodeState ExecuteAction(UPlayerStats* Player) override;
 	static bool DefenderBlockStraightPath(const FVector& AttackerPosition, const FVector& DefenderPosition);
+	FVector CalculateDribbleDirection(const UPlayerStats* Player, const TArray<UPlayerStats*>& NearbyOpponents) const;
 	
 };

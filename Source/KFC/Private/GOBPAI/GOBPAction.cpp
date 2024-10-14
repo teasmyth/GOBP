@@ -70,7 +70,7 @@ TArray<EConditions> UGobpAction::PickNextAction(UPlayerStats* Player)
 		return Conditions;
 	}
 
-	return TArray<EConditions>();
+	return TArray<EConditions>({ EConditions::Divider });;
 }
 
 float UGobpAction::CalculateCost(UPlayerStats* Player)

@@ -8,34 +8,21 @@
 
 EBT_NodeState UDetermineDribbleDirection::ExecuteAction(UPlayerStats* Player)
 {
-	const UPlayerStats* Defender = Player->GetTargetPlayer();
-	if (!Defender)
+	const auto Defenders = Player->GetNearbyOpponents();
+	FVector Dir;
+	if (Defenders.IsEmpty())
 	{
-		//UE_LOG(LogTemp, Error, TEXT("Player %d has no target player"), Player->GetPlayerID());
-		const FVector TargetDir = (AGOBPManager::GetGOBPManagerInstance()->GetAwayGoal()->GetActorLocation() - Player->GetComponentLocation()).GetSafeNormal();
-		Player->SetTargetDirection(TargetDir);
-		return EBT_NodeState::Running;
+		Dir = (Player->GetOpponentGoal()->GetActorLocation() - Player->GetComponentLocation()).GetSafeNormal();
+		//Player->SetTargetDirection((Player->GetOpponentGoal()->GetActorLocation() - Player->GetComponentLocation()).GetSafeNormal());
+		//return EBT_NodeState::Running;
 	}
-
-	const FVector ToDefender = Defender->GetComponentLocation() - Player->GetComponentLocation(); // Vector from attacker to defender
-	const FVector ToGoal = (AGOBPManager::GetGOBPManagerInstance()->GetAwayGoal()->GetActorLocation() - Player->GetComponentLocation()).
-		GetSafeNormal(); // General direction towards the goal
-
-	// Get a perpendicular direction to the defender (either left or right)
-	const FVector Perpendicular = FVector::CrossProduct(ToDefender, FVector::UpVector).GetSafeNormal();
-
-	// Randomly decide to go left or right based on the situation (attacker's vision and defender's positioning)
-	const int RandomFactor = FMath::RandRange(-1, 1);
-	FVector DribbleDirection = RandomFactor > 0 ? Perpendicular : -Perpendicular;
-
-	// Adjust the dribble direction based on how far off-center the defender is
-	if (DefenderBlockStraightPath(Player->GetComponentLocation(), Player->GetTargetPlayer()->GetComponentLocation()))
+	else
 	{
-		constexpr float SomeWeight = 1.2f;
-		DribbleDirection += ToGoal * SomeWeight; // Drift slightly toward the goal
+		Dir = CalculateDribbleDirection(Player, Defenders);
 	}
-
-	Player->SetTargetDirection(DribbleDirection.GetSafeNormal());
+	
+	DrawDebugLine(GetWorld(), Player->GetOwner()->GetActorLocation(), Player->GetOwner()->GetActorLocation() + Dir * 100, FColor::Green, false, 0.001f, 0, 1.0f);
+	Player->SetTargetDirection(Dir);
 	return EBT_NodeState::Running;
 }
 
@@ -56,4 +43,57 @@ bool UDetermineDribbleDirection::DefenderBlockStraightPath(const FVector& Attack
 	constexpr float Threshold = 0.9f; // Tweak this value based on your game logic
 
 	return Alignment < Threshold; // If Alignment is less than the threshold, the defender is off-center
+}
+
+FVector UDetermineDribbleDirection::CalculateDribbleDirection(const UPlayerStats* Player, const TArray<UPlayerStats*>& NearbyOpponents) const
+{
+	const FVector AttackerPosition = Player->GetOwner()->GetActorLocation();
+	const FVector ToGoalNormal = (Player->GetOpponentGoal()->GetActorLocation() - AttackerPosition).GetSafeNormal();
+	FVector RepulsiveForceNormal = FVector::ZeroVector;
+
+	const float SafeDistance = Player->GetProximitySensorRadius() / 2.0f; // Safe distance threshold (in units, tweak as needed) How much should it be?
+
+	const float MinDistance = 50.0f;  // Too close, very strong repulsion
+	const float MaxDistance = 500.0f;  // Beyond this distance, less repulsion
+	const float RepulsionFactor = 1000.0f;
+
+	for (const UPlayerStats* Opponent : NearbyOpponents)
+	{
+		const FVector OpponentPosition = Opponent->GetOwner()->GetActorLocation();
+		const FVector ToOpponent = OpponentPosition - AttackerPosition;
+		const FVector Perpendicular = FVector::CrossProduct(ToOpponent, FVector::UpVector).GetSafeNormal();
+		const int RandomFactor = FMath::RandRange(-1, 1);
+		FVector DribbleDirectionNormal = Perpendicular; //RandomFactor > 0 ? Perpendicular : -Perpendicular; cant have constant randomness in update.
+
+		const float DistanceToOpponent = ToOpponent.Size();
+
+		//VERY WIP
+
+		// If within the safe distance, calculate repulsive forces
+		//if (DistanceToOpponent < SafeDistance)
+		{
+			float ClampedDistance = FMath::Clamp(DistanceToOpponent, MinDistance, MaxDistance);
+			FVector OpponentRepulsionNormal = (-ToOpponent.GetSafeNormal() * SafeDistance / DistanceToOpponent).GetSafeNormal(); //(RepulsionFactor / FMath::Square(ClampedDistance));
+
+
+			if (!DefenderBlockStraightPath(Player->GetComponentLocation(), OpponentPosition))
+			{
+				constexpr float SomeWeight = 1.2f; //need to figure this out
+				OpponentRepulsionNormal += ToGoalNormal * SomeWeight; // Drift slightly toward the goal
+				OpponentRepulsionNormal = OpponentRepulsionNormal.GetSafeNormal();
+			}
+			
+			RepulsiveForceNormal += (OpponentRepulsionNormal + DribbleDirectionNormal).GetSafeNormal();
+			//RepulsiveForce += OpponentRepulsion;
+
+		}
+	}
+
+	DrawDebugLine(GetWorld(), AttackerPosition + FVector(0,0,50), AttackerPosition + FVector(0,0,50) + RepulsiveForceNormal * 100, FColor::Red, false, 0.001f, 0, 1.0f);
+
+	//Combine the direction to goal with repulsive force
+	const  FVector MovementDirection = (ToGoalNormal * 0.5f) + RepulsiveForceNormal; //0.5f weight should depend on aggression maybe?
+
+	// Normalize the final movement direction
+	return MovementDirection.GetSafeNormal();
 }

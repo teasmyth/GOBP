@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "PlayerStats.generated.h"
 
@@ -195,7 +196,7 @@ public:
 	}
 
 	UFUNCTION(BlueprintPure)
-	int32 GetVision() const
+	float GetVision() const
 	{
 		return Vision;
 	}
@@ -205,7 +206,35 @@ public:
 		return FVector(MovementComponent->Velocity.X, MovementComponent->Velocity.Y, 0).Size(); //Probably Z will be 0 but just in case.
 	}
 
-#pragma endregion 
+	UFUNCTION(BlueprintPure)
+	UCharacterMovementComponent* GetMovementComponent() const
+	{
+		return MovementComponent;
+	}
+
+	
+	UFUNCTION(BlueprintCallable, Category = "Player Stats")	
+	AActor* GetHomeGoal() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Player Stats")
+	AActor* GetOpponentGoal() const;
+
+	TArray<UPlayerStats*> GetNearbyOpponents() const
+	{
+		return NearbyOpponents;
+	}
+
+	float GetProximitySensorRadius() const
+	{
+		return ProximitySensor->GetUnscaledSphereRadius();
+	}
+
+#pragma endregion
+	 
+	void SetCurrentActionName(const FString& Action)
+	{
+		CurrentAction = Action;
+	}
 
 	UFUNCTION(BlueprintCallable)
 	void SetTargetDirection(const FVector Direction)
@@ -252,11 +281,7 @@ public:
 		InternalTimer = 0.0f;
 	}
 
-	UFUNCTION(BlueprintPure)
-	UCharacterMovementComponent* GetMovementComponent() const
-	{
-		return MovementComponent;
-	}
+	
 
 protected:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -266,6 +291,8 @@ protected:
 private:
 	//"Blackboard" variables
 
+	UPROPERTY(VisibleAnywhere, Category = "Player Stats | Blackboard")
+	FString CurrentAction;
 	UPROPERTY(VisibleAnywhere, Category = "Player Stats | Blackboard")
 	FVector TargetDirection;
 	UPROPERTY(VisibleAnywhere, Category = "Player Stats | Blackboard")
@@ -337,7 +364,10 @@ private:
 	float InternalTimer = 0.0f;
 
 	UFUNCTION(BlueprintCallable, Category = "Player Stats")
-	void SetControllingBall(const bool Value);
+	void SetControllingBall(const bool Value)
+	{
+		bIsControllingBall = Value;
+	}
 	UFUNCTION(BlueprintCallable, Category = "Player Stats")
 	bool IsControllingBall() const
 	{
@@ -350,12 +380,18 @@ private:
 	UPROPERTY()
 	UCharacterMovementComponent* MovementComponent = nullptr;
 
+	//Sensors
+	UPROPERTY()
+	USphereComponent* ProximitySensor = nullptr;
+	TArray<UPlayerStats*> NearbyOpponents;
 
-	UFUNCTION(BlueprintCallable, Category = "Player Stats")	
-	AActor* GetHomeGoal() const;
+	UFUNCTION()
+	void OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	UFUNCTION(BlueprintCallable, Category = "Player Stats")
-    AActor* GetOpponentGoal() const;
+	UFUNCTION()
+	void OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	
+
 	
 
 	

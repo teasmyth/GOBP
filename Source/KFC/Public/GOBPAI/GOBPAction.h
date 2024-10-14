@@ -17,7 +17,7 @@ enum class EActionType : uint8
 	Action = 1 UMETA(DisplayName = "Simple Action", ToolTip = "This action is meant to be one-time executed action. It does not have any children and uses Start Function only."),
 	Chain = 2 UMETA(DisplayName = "Simple Chain Action", ToolTip = "This action executes all their children without extra condition check. Fails if all children fail."),
 	Selector = 3 UMETA(DisplayName = "Selector Action", ToolTip = "This action will try running their children without extra condition check, as long as they do not fail."),
-	Picker = 4 UMETA(DisplayName = "Picker Action", ToolTip = "This action will pick which child to run next based on its PickNext condition check function, first matching child is picked."),
+	Picker = 4 UMETA(DisplayName = "Picker Action", ToolTip = "These actions are key actions, meaning that the tree should not proceed further unless certain conditions are met. This action will pick which child to run next based on its PickNext condition check function, first matching child is picked."),
 	Decorator
 };
 
@@ -86,6 +86,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP", meta = (DisplayName = "Pick Next Action", Tooltip = "This runs after Start action. It is used to determine the next action to be taken."))
 	TArray<EConditions> PickNextActionBP(UPlayerStats* Player);
 	//This runs after Start action. It is used to determine the next action to be taken.
+	//Unimplemented function will return an array with a Divider ECondition, to know it is unimplemented, rather than an empty array.
 	virtual TArray<EConditions> PickNextAction(UPlayerStats* Player);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "GOBP")

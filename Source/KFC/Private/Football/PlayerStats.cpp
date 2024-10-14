@@ -2,7 +2,6 @@
 
 
 #include "Football/PlayerStats.h"
-
 #include "Football/FootballEventManager.h"
 #include "GOBPAI/GOBPManager.h"
 
@@ -21,6 +20,19 @@ void UPlayerStats::BeginPlay()
 	if (MovementComponent == nullptr)
 	{
 		MovementComponent = GetOwner()->FindComponentByClass<UCharacterMovementComponent>();
+	}
+
+	if (ProximitySensor == nullptr)
+	{
+		ProximitySensor = GetOwner()->FindComponentByClass<USphereComponent>();
+
+		ProximitySensor->OnComponentBeginOverlap.AddDynamic(this, &UPlayerStats::OnBeginOverlap);
+		ProximitySensor->OnComponentEndOverlap.AddDynamic(this, &UPlayerStats::OnEndOverlap);
+
+		//A vision with 50 does not modify proximity sensor, while greater or smaller number does, increasing or decreasing up to by 100.
+		//Maybe this should not be hardcoded here.
+		const float SphereRadius = ProximitySensor->GetUnscaledSphereRadius() + MAX_STAT_NUMBER * 2 * GetVision() / (MAX_STAT_NUMBER / 2);
+		ProximitySensor->SetSphereRadius(SphereRadius);
 	}
 
 	CurrentMaxStamina = MaxStamina;
@@ -52,6 +64,7 @@ void UPlayerStats::TickComponent(float DeltaTime, enum ELevelTick TickType, FAct
 	}
 }
 
+#pragma region Movement
 
 void UPlayerStats::Run(const FVector Dir)
 {
@@ -119,10 +132,80 @@ void UPlayerStats::Jockey(const FVector Dir)
 {
 }
 
-void UPlayerStats::SetControllingBall(const bool Value)
+void UPlayerStats::SetMovementMode(const EPlayerMovementMode Mode)
 {
-	bIsControllingBall = Value;
+	if (MovementMode == Mode)
+	{
+		return;
+	}
+
+	switch (MovementMode)
+	{
+	case EPlayerMovementMode::Running:
+		break;
+	case EPlayerMovementMode::Sprinting:
+		CurrentMaxStamina = (CurrentMaxStamina - CurrentStamina) * AGOBPManager::GetGOBPManagerInstance()->GetStaminaLossRatioPerUsedStamina();;
+		break;
+	case EPlayerMovementMode::Jockeying:
+		break;
+
+	case EPlayerMovementMode::Walking:
+		break;
+
+	default: break;
+	}
+
+	switch (Mode)
+	{
+	case EPlayerMovementMode::Running:
+		if (MovementMode != EPlayerMovementMode::Sprinting)
+		{
+			InternalTimer = 0.0f;
+		}
+		break;
+	case EPlayerMovementMode::Sprinting:
+		if (MovementMode != EPlayerMovementMode::Running)
+		{
+			InternalTimer = 0.0f;
+		}
+		break;
+	case EPlayerMovementMode::Jockeying:
+		InternalTimer = 0.0f;
+		break;
+	case EPlayerMovementMode::Walking:
+		break;
+	default: break;
+	}
+
+	MovementMode = Mode;
 }
+
+#pragma endregion
+
+#pragma region Sensors
+
+void UPlayerStats::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+	bool bFromSweep, const FHitResult& SweepResult)
+{
+	UPlayerStats* OtherPlayer = OtherActor->FindComponentByClass<UPlayerStats>();
+	
+	if (OtherPlayer != nullptr && OtherPlayer->Team != Team && !NearbyOpponents.Contains(OtherPlayer))
+	{
+		NearbyOpponents.Add(OtherPlayer);
+		UE_LOG(LogTemp, Warning, TEXT("Player %s is near player %s"), *GetOwner()->GetName(), *OtherActor->GetName());
+	}
+}
+
+void UPlayerStats::OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	UPlayerStats* OtherPlayer = OtherActor->FindComponentByClass<UPlayerStats>();
+	if (OtherPlayer != nullptr && NearbyOpponents.Contains(OtherPlayer))
+	{
+		NearbyOpponents.Remove(OtherPlayer);
+	}
+}
+
+#pragma endregion
 
 AActor* UPlayerStats::GetHomeGoal() const
 {
@@ -170,53 +253,4 @@ void UPlayerStats::SetHasBall(const UPlayerStats* Player)
 	{
 		bHasBall = false;
 	}
-}
-
-
-void UPlayerStats::SetMovementMode(const EPlayerMovementMode Mode)
-{
-	if (MovementMode == Mode)
-	{
-		return;
-	}
-
-	switch (MovementMode)
-	{
-	case EPlayerMovementMode::Running:
-		break;
-	case EPlayerMovementMode::Sprinting:
-		CurrentMaxStamina = (CurrentMaxStamina - CurrentStamina) * AGOBPManager::GetGOBPManagerInstance()->GetStaminaLossRatioPerUsedStamina();;
-		break;
-	case EPlayerMovementMode::Jockeying:
-		break;
-
-	case EPlayerMovementMode::Walking:
-		break;
-
-	default: break;
-	}
-
-	switch (Mode)
-	{
-	case EPlayerMovementMode::Running:
-		if (MovementMode != EPlayerMovementMode::Sprinting)
-		{
-			InternalTimer = 0.0f;
-		}
-		break;
-	case EPlayerMovementMode::Sprinting:
-		if (MovementMode != EPlayerMovementMode::Running)
-		{
-			InternalTimer = 0.0f;
-		}
-		break;
-	case EPlayerMovementMode::Jockeying:
-		InternalTimer = 0.0f;
-		break;
-	case EPlayerMovementMode::Walking:
-		break;
-	default: break;
-	}
-
-	MovementMode = Mode;
 }

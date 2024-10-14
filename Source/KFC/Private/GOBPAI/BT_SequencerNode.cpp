@@ -63,14 +63,16 @@ EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 		return Failure;
 	}
 
+	//Technically, I could use a switch but feels ugly.
+
 	//To pick next action, we need to check the outcome before executing the action of this action node.
 	if (Action->ActionType == EActionType::Picker)
 	{
 		const auto SelectedOutcome = Action->PickNextAction(Player);
 
-		if (SelectedOutcome.IsEmpty())
+		if (SelectedOutcome.IsEmpty() || SelectedOutcome.Contains(EConditions::Divider))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("No action was selected for %s"), *NodeName);
+			UE_LOG(LogTemp, Warning, TEXT("No action was selected for %s or it wrongly contains a Divider"), *NodeName);
 			return Action->ExecuteAction(Player);
 		}
 
@@ -83,9 +85,13 @@ EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 				return Child->Update(Player);
 			}
 		}
+
+		//If we are here, it means that we were not able to pick any children, therefore, should execute the action.
+		return Action->ExecuteAction(Player);
 	}
 
 
+	
 	if (const auto Outcome = Action->ExecuteAction(Player); Outcome == Failure)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Action %s failed."), *NodeName);
@@ -145,10 +151,6 @@ EBT_NodeState BT_SequencerNode::OnUpdate(UPlayerStats* Player)
 			return Success;
 		}
 	}
-
-
 	
-
-	//UE_LOG(LogTemp, Warning, TEXT("No action was selected for %s or all actions failed."), *NodeName);
 	return Running;
 }

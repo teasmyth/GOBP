@@ -17,7 +17,24 @@ public:
 	// Sets default values for this component's properties
 	UGOBPComponent();
 
+	UFUNCTION(CallInEditor, Category = "GOBP")
+	void PauseUnpauseTree()
+	{
+		bRunTree = !bRunTree;
+	}
 	
+	
+
+protected:
+	// Called when the game starts
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+public:
+	// Called every frame
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+private:
 
 	UPROPERTY(EditAnywhere)
 	UPlayerStats* PlayerStats = nullptr;
@@ -40,24 +57,8 @@ public:
 	UPROPERTY(EditAnywhere)
 	UBehaviorTree* BehaviorTree = nullptr;
 
-	UFUNCTION(CallInEditor, Category = "GOBP")
-	void PauseUnpauseTree()
-	{
-		bRunTree = !bRunTree;
-	}
-	
-	TSharedPtr<BT_RootNode> RootNode;
-
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
-public:
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-private:
+	UPROPERTY(EditAnywhere, Category = "GOBP")
 	bool bRunTree = true;
 
+	TSharedPtr<BT_RootNode> RootNode;
 };
