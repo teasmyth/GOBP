@@ -43,7 +43,7 @@ bool GOBPlanner::Plan(UPlayerStats* Player, UObject* Outer, const EPriority& Pri
 		}
 	}
 
-	TArray<UGobpAction*> UsedActions = InActions; //why is clear shot action not in the plan>?
+	TArray<UGobpAction*> UsedActions = InActions;
 
 	for (const auto GoalAction : GoalActions)
 	{
@@ -126,6 +126,7 @@ bool GOBPlanner::FindPath(UPlayerStats* Player, const TSharedPtr<Node>& Child, T
 {
 	for (const auto Action : UsableActions)
 	{
+		/*
 		//Limitation:: A node cannot have a condition that precedes for more than one node.
 		//Meaning each actions' conditions should only be satisfied fully by one action prior.
 		//Right now, I could not figure out how to properly carry over 'unsatisfied conditions' to the next actions without messing up the planning.
@@ -139,6 +140,7 @@ bool GOBPlanner::FindPath(UPlayerStats* Player, const TSharedPtr<Node>& Child, T
 		//where each action's precondition is a single element. Having HasBall and ClearShot is meanigless as by that time I should have the ball anyway,
 		//so this would just lead to unnecessary, self-implied if checks. Therefore, it is not an "issue" any more. I will remove all of these comments once I made the
 		//necessary changes.
+		*/
 
 		
 		if (!Action->CanBeDoneBeforeNewAction(Child->ConditionStates)) continue;

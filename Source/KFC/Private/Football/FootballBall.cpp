@@ -65,3 +65,21 @@ FVector UFootballBall::GetBallDirection(const FVector Player) const
 {
 	return (GetOwner()->GetActorLocation() - Player).GetSafeNormal2D();
 }
+
+void UFootballBall::DisableBallCollisionWithPlayers(const bool bDisable)
+{
+	if (BallMesh == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("BallMesh is null"));
+		return;
+	}
+
+	if (bDisable)
+	{
+		BallMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	}
+	else
+	{
+		BallMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+	}
+}

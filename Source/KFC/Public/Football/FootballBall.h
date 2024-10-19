@@ -40,6 +40,10 @@ public:
 
 	UStaticMeshComponent* GetBallMesh() const { return BallMesh; }
 
+	UFUNCTION(BlueprintCallable, Category = "Ball")
+	void DisableBallCollisionWithPlayers(const bool bDisable);
+	
+
 
 private:
 	UPROPERTY()
